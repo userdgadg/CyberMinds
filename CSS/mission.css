@@ -7,12 +7,13 @@ body {
   display: flex;
   position: relative;
   flex-direction: column;
-  height: 240vh;
+  min-height: 100vh;
   width: auto;
+  padding-bottom: 2em;
 }
 
 body {
-  height: 240vh;
+  min-height: 100vh;
   font-family: "Georgia", sans-serif;
   margin: 0;
   padding: 0;
@@ -101,12 +102,7 @@ main {
   word-spacing: 0.2em;
   letter-spacing: 0.1em;
   color: transparent; /* Set initial text color to transparent */
-  background: linear-gradient(
-    to left,
-    rgba(0, 0, 0, 0.5),
-    rgba(0, 0, 0, 0),
-    rgba(255, 255, 255, 0.8)
-  ); /* Adjust the colors and stops as needed */
+  background: linear-gradient(to left, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0), rgba(255, 255, 255, 0.8)); /* Adjust the colors and stops as needed */
   background-clip: text;
   -webkit-background-clip: text;
   animation: fadeIn 3s forwards; /* Set the duration of the animation */

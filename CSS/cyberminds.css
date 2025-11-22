@@ -107,12 +107,7 @@ header {
   color: transparent;
   /* Set initial text color to transparent */
   font-size: 2.4em;
-  background: linear-gradient(
-    to left,
-    rgba(0, 0, 0, 0.5),
-    rgba(0, 0, 0, 0),
-    rgb(255, 255, 255)
-  );
+  background: linear-gradient(to left, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0), rgb(255, 255, 255));
   /* Adjust the colors and stops as needed */
   background-clip: text;
   -webkit-background-clip: text;
@@ -144,12 +139,7 @@ header {
   color: transparent;
   /* Set initial text color to transparent */
   font-size: 0.9em;
-  background: linear-gradient(
-    to left,
-    rgba(0, 0, 0, 0.5),
-    rgba(0, 0, 0, 0),
-    rgb(255, 255, 255)
-  ); /* Adjust the colors and stops as needed */
+  background: linear-gradient(to left, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0), rgb(255, 255, 255)); /* Adjust the colors and stops as needed */
   background-clip: text;
   -webkit-background-clip: text;
   animation: fadeIn 3s forwards; /* Set the duration of the animation */
@@ -325,14 +315,14 @@ a {
   background-color: rgb(0, 0, 0);
   margin-top: 3%;
   z-index: 999;
-  position: absolute;
+  position: relative;
   width: 100%;
-  height: fit-content;
+  padding-bottom: 3em;
   align-items: center;
   justify-content: space-between;
   display: inline-block;
   text-align: center;
-  animation: rotateBoxShadow 4s infinite linear; /* Adjust the duration and timing function as needed */
+  animation: rotateBoxShadow 4s infinite linear;
 }
 
 @keyframes rotateBoxShadow {
@@ -465,6 +455,59 @@ a {
 
 .blue-word {
   color: rgb(139, 207, 255);
+}
+
+.opportunities-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2em;
+  padding: 2em 5%;
+  margin-bottom: 2em;
+}
+
+.opportunity-card {
+  flex: 0 1 250px;
+  background: rgba(17, 25, 35, 0.9);
+  border-radius: 1em;
+  padding: 2em 1.5em;
+  text-align: center;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+  z-index: 10001;
+}
+
+.opportunity-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 15px 40px rgba(23, 72, 103, 0.5);
+}
+
+.opportunity-icon {
+  background-color: white;
+  border-radius: 50%;
+  width: 80px;
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.5em;
+  animation: rotateBoxShadow1 4s infinite linear;
+}
+
+.opportunity-title {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.3em;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 0.8em;
+}
+
+.opportunity-desc {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 0.95em;
+  color: rgba(255, 255, 255, 0.8);
+  line-height: 1.6;
 }
 
 .section4 {

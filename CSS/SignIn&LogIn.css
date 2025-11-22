@@ -1,106 +1,256 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Space Grotesk", sans-serif;
+}
 
-*{
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: "Poppins", sans-serif;
-    background-color: black;
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background-color: black;
+  animation: rotateBoxShadow 4s infinite linear;
 }
-body{
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    background: url(bg.jpg) no-repeat;
-    background-size: cover;
-    background-position: center;
-}
-.wrapper{
-    width: 420px;
-    background: transparent;
-    border: 2px solid rgba(255, 255, 255, .2);
-    backdrop-filter: blur(9px);
-    color: #fff;
-    border-radius: 12px;
-    padding: 30px 40px;
-}
-.wrapper h1{
-    font-size: 36px;
-    text-align: center;
-}
-.wrapper .input-box{
-    position: relative;
-    width: 100%;
-    height: 50px;
-    
-    margin: 30px 0;
-}
-.input-box input{
-    width: 100%;
-    height: 100%;
-    background: transparent;
-    border: none;
-    outline: none;
-    border: 2px solid rgba(255, 255, 255, .2);
-    border-radius: 40px;
-    font-size: 16px;
-    color: #fff;
-    padding: 20px 45px 20px 20px;
-}
-.input-box input::placeholder{
-    color: #fff;
-}
-.input-box i{
-    position: absolute;
-    right: 20px;
-    top: 30%;
-    transform: translate(-50%);
-    font-size: 20px;
 
+@keyframes rotateBoxShadow {
+  0% {
+    box-shadow: inset 0px 0em 15em #102d42;
+  }
+  33% {
+    box-shadow: inset 0px 1em 20em #213f67;
+  }
+  66% {
+    box-shadow: inset 0px 0.5em 20em #132b49;
+  }
+  100% {
+    box-shadow: inset 0em 0em 15em #143852;
+  }
 }
-.wrapper .remember-forgot{
-    display: flex;
-    justify-content: space-between;
-    font-size: 14.5px;
-    margin: -15px 0 15px;
-}
-.remember-forgot label input{
-    accent-color: #fff;
-    margin-right: 3px;
 
+header {
+  background-color: #000000;
+  color: #ffffff;
+  text-align: center;
+  padding-left: 1em;
+  padding-bottom: 0.2em;
+  padding-right: 1em;
+  padding-top: 1em;
 }
-.remember-forgot a{
-    color: #fff;
-    text-decoration: none;
 
+.header-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
-.remember-forgot a:hover{
-    text-decoration: underline;
-}
-.wrapper .btn{
-    width: 100%;
-    height: 45px;
-    background: #fff;
-    border: none;
-    outline: none;
-    border-radius: 40px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, .1);
-    cursor: pointer;
-    font-size: 16px;
-    color: #333;
-    font-weight: 600;
-}
-.wrapper .register-link{
-    font-size: 14.5px;
-    text-align: center;
-    margin: 20px 0 15px;
 
+.header-content img {
+  max-height: 3em;
+  margin-right: 3em;
 }
-.register-link p a{
-    color: #fff;
-    text-decoration: none;
-    font-weight: 600;
+
+.header-buttons {
+  display: flex;
+  justify-content: space-between;
+  background-color: #000000;
+  padding: 0.5em;
+  padding-left: 6em;
+  padding-right: 6em;
+  align-items: center;
+  flex-grow: 1;
 }
-.register-link p a:hover{
-    text-decoration: underline;
+
+.header-buttons a {
+  text-decoration: none;
+  font-size: 14pt;
+  color: #ffffff;
+  padding: 0.5em 1em;
+  transition: background-color 0.3s;
+  background-color: #174867;
+  margin-right: 0.9em;
+  padding: 0.4em 0.8em;
+  border-radius: 0.8em;
+  white-space: nowrap;
+}
+
+.header-buttons a:hover {
+  background-color: #286aa7;
+}
+
+.signin-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 2em;
+}
+
+.page-title {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 3em;
+  font-weight: 700;
+  word-spacing: 0.2em;
+  letter-spacing: 0.1em;
+  margin-bottom: 0.3em;
+  color: transparent;
+  background: linear-gradient(to left, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0), rgba(255, 255, 255, 0.8));
+  background-clip: text;
+  -webkit-background-clip: text;
+  animation: fadeIn 2s forwards;
+}
+
+@keyframes fadeIn {
+  to {
+    color: rgb(255, 255, 255);
+    background-size: 200% 100%;
+  }
+}
+
+.optional-note {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 1em;
+  margin-bottom: 2em;
+}
+
+.wrapper {
+  width: 420px;
+  background: rgba(17, 25, 35, 0.9);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(9px);
+  color: #fff;
+  border-radius: 12px;
+  padding: 30px 40px;
+}
+
+.wrapper h1 {
+  font-size: 36px;
+  text-align: center;
+  background: transparent;
+}
+
+.wrapper .input-box {
+  position: relative;
+  width: 100%;
+  height: 50px;
+  margin: 30px 0;
+}
+
+.input-box input {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 40px;
+  font-size: 16px;
+  color: #fff;
+  padding: 20px 45px 20px 20px;
+}
+
+.input-box input::placeholder {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.input-box i {
+  position: absolute;
+  right: 20px;
+  top: 30%;
+  transform: translate(-50%);
+  font-size: 20px;
+  background: transparent;
+}
+
+.wrapper .remember-forgot {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14.5px;
+  margin: -15px 0 15px;
+}
+
+.remember-forgot label {
+  background: transparent;
+}
+
+.remember-forgot label input {
+  accent-color: #fff;
+  margin-right: 3px;
+  background: transparent;
+}
+
+.remember-forgot a {
+  color: #8bcfff;
+  text-decoration: none;
+  background: transparent;
+}
+
+.remember-forgot a:hover {
+  text-decoration: underline;
+}
+
+.wrapper .btn {
+  width: 100%;
+  height: 45px;
+  background: #174867;
+  border: none;
+  outline: none;
+  border-radius: 40px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  cursor: pointer;
+  font-size: 16px;
+  color: #fff;
+  font-weight: 600;
+  transition: background-color 0.3s;
+}
+
+.wrapper .btn:hover {
+  background: #286aa7;
+}
+
+.wrapper .register-link {
+  font-size: 14.5px;
+  text-align: center;
+  margin: 20px 0 15px;
+  background: transparent;
+}
+
+.register-link p {
+  background: transparent;
+}
+
+.register-link p a {
+  color: #8bcfff;
+  text-decoration: none;
+  font-weight: 600;
+  background: transparent;
+}
+
+.register-link p a:hover {
+  text-decoration: underline;
+}
+
+.page-footer {
+  background-color: #0a0a0a;
+  color: #fff;
+  text-align: center;
+  padding: 1em 0;
+  font-size: 0.9em;
+  font-family: "Space Grotesk", sans-serif;
+}
+
+@media (max-width: 500px) {
+  .wrapper {
+    width: 90%;
+    padding: 20px 25px;
+  }
+
+  .page-title {
+    font-size: 2em;
+  }
+
+  .header-buttons {
+    padding-left: 1em;
+    padding-right: 1em;
+  }
 }
