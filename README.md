@@ -6,7 +6,6 @@ A free, engaging cybersecurity education platform designed to equip users with t
 
 CyberMinds provides interactive cybersecurity education through:
 
-- **12 Comprehensive Courses** - From fundamentals to advanced topics like penetration testing and networking
 - **Interactive Quizzes & Games** - Reinforce learning through engaging activities
 - **Live Help Chatbot** - AI-powered assistance for cybersecurity questions
 - **CTF Challenges** - Capture The Flag challenges to practice real-world skills
@@ -17,7 +16,7 @@ CyberMinds provides interactive cybersecurity education through:
 - Self-paced learning
 - Interactive code terminals
 - Mobile-responsive design
-- No sign-in required (optional account creation)
+- No sign-in required
 
 ## Getting Started
 
@@ -33,43 +32,11 @@ CyberMinds provides interactive cybersecurity education through:
 
    ```bash
    # Using Python
-   python -m http.server 8000
+   python -m http.server 3000
 
    # Using Node.js
    npx serve
    ```
-
-## Project Structure
-
-```
-CyberMinds/
-├── index.html              # Home page
-├── HTML/                   # All HTML pages
-│   ├── Courses and Activities/  # Course content (12 courses)
-│   ├── ourTeam.html        # Team page
-│   ├── mission.html        # Mission statement
-│   ├── LiveHelp.html       # AI chatbot
-│   └── ...
-├── CSS/                    # Stylesheets
-├── Javascript/             # Scripts
-├── Images/                 # Assets
-└── .github/                # GitHub templates
-```
-
-## Courses Overview
-
-1. **Introduction to Cybersecurity** - Fundamentals and CIA Triad
-2. **Cybersecurity Policies** - For individuals and companies
-3. **Cyber Attacks** - Threat actors and social engineering
-4. **Defense Measures** - Technical and non-technical defenses
-5. **Cryptography** - Encryption, hashing, and ciphers
-6. **Linux Fundamentals** - Commands, permissions, and file systems
-7. **Advanced Attacks** - Spoofing and persistent threats
-8. **Risk Management** - Identifying and protecting against risks
-9. **Penetration Testing** - Ethical hacking concepts
-10. **Networking** - Protocols, ports, and network security
-11. **Coming Soon**
-12. **Coming Soon**
 
 ## Contributing
 
@@ -81,7 +48,7 @@ For security concerns, please review our [Security Policy](.github/SECURITY.md).
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License, see the [LICENSE](LICENSE) file for details.
 
 ## Team
 
@@ -90,8 +57,3 @@ CyberMinds is built by students passionate about cybersecurity education. Visit 
 ## Contact
 
 - Website: [CyberMinds](https://cyber-minds.github.io/CyberMinds/)
-- Email: cyberminds@example.com
-
----
-
-_Protecting the digital future._
