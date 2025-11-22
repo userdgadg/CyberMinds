@@ -1,33 +1,65 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name = "viewport" content="width=device-width, initial-scale=1.0">
-        <title>Sign In</title>
-        <link rel="stylesheet" href="styles.css">
-        <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    </head>
-    <body>
-        <div class="wrapper">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sign In - CyberMinds</title>
+    <link rel="stylesheet" href="../CSS/SignIn&LogIn.css" />
+    <link rel="icon" type="jpg" href="../Images/circle.jpg" />
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=MuseoModerno:ital,wght@0,100..900;1,100..900&family=Space+Grotesk:wght@300..700&display=swap"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <header>
+      <div class="header-content">
+        <img src="../Images/circle.jpg" alt="CyberMinds Logo" />
+        <nav class="header-buttons">
+          <a href="../index.html">Home</a>
+          <a href="moreinfo.html">More Info</a>
+          <a href="mission.html">Mission</a>
+          <a href="LiveHelp.html">Live Help</a>
+          <a href="course_Contents.html">Courses</a>
+          <a href="ourTeam.html">Our Team</a>
+          <a href="CTF.html">CTF</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="signin-container">
+      <p class="page-title">Sign In</p>
+      <p class="optional-note">Sign in is optional - you can use CyberMinds without an account</p>
+
+      <div class="wrapper">
         <form action="">
-            <h1>Login</h1>
-            <div class=" input-box">
-                <input type="text" placeholder="Username" required>
-                <i class='bx bxs-user'></i>
-            </div>
-            <div class=" input-box">
-                <input type="password" placeholder="Password" required>
-                <i class='bx bxs-lock-alt' ></i>
-            </div>
-            <div class="remember-forgot">
-                <label><input type="checkbox">Remember Me</label>
-                <a href="#">Forgot Password?</a>
-            </div>
-            <button type="submit" class="btn">Login</button>
-            <div class="register-link">
-                <p>Don't have an account?<a href="#">Register</a></p>
-            </div>
+          <h1>Login</h1>
+          <div class="input-box">
+            <input type="text" placeholder="Username" required />
+            <i class="bx bxs-user"></i>
+          </div>
+          <div class="input-box">
+            <input type="password" placeholder="Password" required />
+            <i class="bx bxs-lock-alt"></i>
+          </div>
+          <div class="remember-forgot">
+            <label><input type="checkbox" />Remember Me</label>
+            <a href="#">Forgot Password?</a>
+          </div>
+          <button type="submit" class="btn">Login</button>
+          <div class="register-link">
+            <p>Don't have an account? <a href="#">Register</a></p>
+          </div>
         </form>
-        </div>
-    </body>
+      </div>
+    </main>
+
+    <footer class="page-footer">
+      <p>&copy; 2024 CyberMinds, Inc. All rights reserved.</p>
+    </footer>
+      <script src="../Javascript/footer.js"></script>
+  </body>
 </html>

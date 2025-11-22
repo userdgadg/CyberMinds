@@ -5,23 +5,18 @@
   font-style: normal;
   word-spacing: 0.2em;
   letter-spacing: 0.1em;
-  padding-bottom: 1em;
-  color: transparent; /* Set initial text color to transparent */
-  background: linear-gradient(
-    to left,
-    rgba(0, 0, 0, 0.5),
-    rgba(0, 0, 0, 0),
-    rgba(255, 255, 255, 0.8)
-  ); /* Adjust the colors and stops as needed */
+  padding-bottom: 0.5em;
+  color: transparent;
+  background: linear-gradient(to left, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0), rgba(255, 255, 255, 0.8));
   background-clip: text;
   -webkit-background-clip: text;
-  animation: fadeIn 2s forwards; /* Set the duration of the animation */
+  animation: fadeIn 2s forwards;
 }
 
 @keyframes fadeIn {
   to {
     color: rgb(255, 255, 255);
-    background-size: 200% 100%; /* Adjust the size of the gradient */
+    background-size: 200% 100%;
   }
 }
 
@@ -92,36 +87,65 @@ header {
   background-color: #174867;
   text-decoration: none;
   margin-right: 0.9em;
-  padding: 0.4em 0.8em; /* Smaller padding for a more compact button */
-  border-radius: 0.8em; /* Make the buttons more rounded */
-  white-space: nowrap; /* Prevent text from wrapping */
+  padding: 0.4em 0.8em;
+  border-radius: 0.8em;
+  white-space: nowrap;
 }
 
 .header-buttons a:hover {
   background-color: #286aa7;
 }
 
+.team-section {
+  margin: 2em 3em;
+  padding: 2em;
+  background: linear-gradient(to bottom, rgba(17, 25, 35, 0.8), rgba(17, 38, 59, 0.6));
+  border-radius: 1em;
+}
+
+.team-section-title {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 2em;
+  font-weight: 600;
+  color: #ffffff;
+  margin-bottom: 1.5em;
+  padding-bottom: 0.5em;
+  border-bottom: 2px solid #174867;
+}
+
 .flex-container {
   display: flex;
   flex-wrap: wrap;
+  justify-content: center;
+  gap: 2em;
 }
 
 .flex-item {
-  flex: 20%;
-
+  flex: 0 1 280px;
   color: white;
   text-align: center;
   font-size: 0.9em;
-  margin-bottom: 2.5em;
-  margin-left: 1%;
-  margin-right: 1%;
+  padding: 1.5em;
+  background: rgba(17, 26, 35, 0.9);
+  border-radius: 0.8em;
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.flex-item:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 30px rgba(23, 72, 103, 0.4);
 }
 
 .img {
-  border-width: 0.9em;
-  border-style: solid; /* Add this line */
+  width: 150px;
+  height: 150px;
+  object-fit: cover;
+  border-width: 0.4em;
+  border-style: solid;
   border-color: #111a23;
-  border-radius: 0.3em 0.3em 0.3em 0.3em;
+  border-radius: 50%;
   animation: rotateBoxShadow1 4s infinite linear;
 }
 
@@ -142,24 +166,50 @@ header {
 
 @media (max-width: 62.5em) {
   .flex-item {
-    flex: 33%;
+    flex: 0 1 250px;
   }
 }
 
-@media (max-width: 20em) {
+@media (max-width: 40em) {
   .flex-item {
-    flex: 100%;
+    flex: 0 1 100%;
   }
+
+  .team-section {
+    margin: 1em;
+    padding: 1em;
+  }
+
+  .pagetitle {
+    font-size: 2.5em;
+  }
+}
+
+h2 {
+  font-family: "Space Grotesk", sans-serif;
+  font-weight: 600;
+  font-size: 1.3em;
+  margin-top: 1em;
+  margin-bottom: 0.3em;
 }
 
 h3 {
   font-family: "Space Grotesk", sans-serif;
-  font-weight: 100;
+  font-weight: 400;
   font-size: 1em;
+  color: #8bcfff;
+  margin-bottom: 0.8em;
 }
 
-a,
-h2 {
+.member-description {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 0.95em;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+}
+
+a {
   font-family: "Space Grotesk", sans-serif;
   font-weight: 400;
 }
@@ -179,4 +229,5 @@ footer {
   padding: 1em 0;
   font-size: 0.9em;
   font-family: "Space Grotesk", sans-serif;
+  margin-top: 2em;
 }
