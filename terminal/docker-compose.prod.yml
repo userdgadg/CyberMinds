@@ -32,6 +32,7 @@ services:
       - PORT=3000
       - ENVIRONMENT=production
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+    stop_grace_period: 55s
     restart: unless-stopped
     depends_on:
       - terminal-base
