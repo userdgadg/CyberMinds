@@ -51,7 +51,7 @@ func shutdownSessions() {
 
 	select {
 	case <-done:
-		log.Printf("Shutdown: all sessions cleaned up")
+		log.Printf("Shutdown: all session cleanup attempts completed")
 	case <-time.After(cleanupDeadline):
 		log.Printf("Shutdown: cleanup deadline exceeded; remaining sessions abandoned")
 	}
