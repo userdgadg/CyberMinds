@@ -337,6 +337,7 @@ function checkChallengeSolution() {
         applyChallengeStarter(true);
         showToast('Challenge completed. Moved to next.');
       } else {
+        renderProgressTimeline();
         showToast('All challenges completed.');
       }
       return;
@@ -442,6 +443,7 @@ function handleCheckOutput(chunk) {
       applyChallengeStarter(true);
       showToast('Challenge completed. Moved to next.');
     } else {
+      renderProgressTimeline();
       showToast('All challenges completed.');
     }
     return;
