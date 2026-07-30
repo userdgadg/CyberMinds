@@ -40,6 +40,9 @@ func TestGetChallengeIndex(t *testing.T) {
 	if got := getChallengeIndex("suspicious-beaconing"); got != 5 {
 		t.Fatalf("expected suspicious-beaconing index 5, got %d", got)
 	}
+	if got := getChallengeIndex("phishing-header"); got != 6 {
+		t.Fatalf("expected phishing-header index 6, got %d", got)
+	}
 	if got := getChallengeIndex("unknown"); got != -1 {
 		t.Fatalf("expected -1 for unknown challenge, got %d", got)
 	}
