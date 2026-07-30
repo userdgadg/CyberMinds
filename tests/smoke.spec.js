@@ -672,6 +672,47 @@ test.describe('Mock terminal', () => {
     await expect(page.locator('#continueLearningCtfCount')).toContainText('1');
   });
 
+  test('phishing-header challenge loads mock email and passes checker with valid findings', async ({
+    page,
+  }) => {
+    await page.goto(
+      '/HTML/terminal/index.html?challenge=phishing-header&mockTerminal=1'
+    );
+    await waitForMockReady(page);
+
+    await expect(page.locator('#challengeTitle')).toHaveText(
+      'Phishing Header Analysis',
+      { timeout: 30_000 }
+    );
+
+    // Confirm the mock .eml file was seeded
+    const emlContent = await page.evaluate(
+      () => window.getMockFile('phishing.eml') || ''
+    );
+    expect(emlContent).toContain('Return-Path');
+    expect(emlContent).toContain('phish-mailer.invalid');
+    expect(emlContent).toContain('spf=fail');
+    expect(emlContent).toContain('dkim=fail');
+
+    // Seed a passing findings file
+    await page.evaluate(() => {
+      window.setMockFile(
+        'phishing-findings.txt',
+        [
+          'Impersonated domain: corporate-alerts.example.com (Security Team)',
+          'Return-Path mismatch: envelope sender is bounces@phish-mailer.invalid',
+          'SPF fail: 203.0.113.99 is not a permitted sender for corporate-alerts.example.com',
+          'DKIM fail: signature verification failed for corporate-alerts.example.com',
+          'Suspicious Received chain: mail relayed through phish-mailer.invalid',
+        ].join('\n')
+      );
+    });
+
+    await page.locator('#checkSolutionBtn').click();
+    await expect(page.locator('#progressChip')).toContainText('1/');
+    await expect(page.locator('#toast')).toContainText(/completed/i);
+  });
+
   test('draft autosaves before a fast reload and restores the edit', async ({
     page,
   }) => {

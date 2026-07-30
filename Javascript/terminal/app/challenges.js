@@ -102,6 +102,9 @@ function ensureChallengeWorkspace(challenge) {
     if (activeChallengeId === 'idor-triage') {
       setMockFile('requests.log', `${idorRequestLog}\n`);
     }
+    if (activeChallengeId === 'phishing-header') {
+      setMockFile('phishing.eml', `${phishingEmlContent}\n`);
+    }
     syncWorkspaceFiles();
     return;
   }
@@ -300,6 +303,18 @@ function checkChallengeSolution() {
         if (!/\/api\/users|endpoint|path/i.test(idorReport)) return false;
         if (!/idor|insecure.{0,20}direct|object.{0,20}ref|sequential|enumerat|unauthori/i.test(idorReport)) return false;
         return /(authoriz|least.{0,10}priv|ownership|permission|access.{0,10}control|object.{0,10}level)/i.test(idorReport);
+      })(),
+      'phishing-header': (() => {
+        const findings = getMockFile('phishing-findings.txt') || '';
+        if (!findings.trim()) return false;
+        if (!/corporate.alerts|security.team|noreply@|impersonat|spoof/i.test(findings)) return false;
+        const indicators = [
+          /return.path|phish.mailer|mismatch|envelope/i.test(findings),
+          /spf.*fail|fail.*spf|spf=fail/i.test(findings),
+          /dkim.*fail|fail.*dkim|dkim=fail|signature.*fail/i.test(findings),
+          /received|relay|hop|chain/i.test(findings),
+        ];
+        return indicators.filter(Boolean).length >= 3;
       })(),
     };
     const passed = !!checksByChallenge[activeChallengeId];

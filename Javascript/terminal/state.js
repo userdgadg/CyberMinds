@@ -238,6 +238,72 @@ const idorCheckScript = [
   'CM_IDOR_CHECK',
 ].join('\n');
 
+const phishingEmlContent = [
+  '# SYNTHETIC DATA — NOT A REAL EMAIL',
+  'Delivered-To: analyst@infosec-lab.invalid',
+  'Received: from mail.phish-mailer.invalid (mail.phish-mailer.invalid [203.0.113.99])',
+  '        by mx.infosec-lab.invalid with ESMTP id a1b2c3d4',
+  '        for <analyst@infosec-lab.invalid>; Wed, 15 Jan 2026 10:33:12 +0000 (UTC)',
+  'Received: from [10.10.10.200] (unknown [10.10.10.200])',
+  '        by mail.phish-mailer.invalid with SMTP id e5f6a7b8',
+  '        for <analyst@infosec-lab.invalid>; Wed, 15 Jan 2026 10:33:08 +0000 (UTC)',
+  'Authentication-Results: mx.infosec-lab.invalid;',
+  '        spf=fail (corporate-alerts.example.com does not designate 203.0.113.99 as permitted sender)',
+  '        smtp.mailfrom=bounces@phish-mailer.invalid;',
+  '        dkim=fail header.d=corporate-alerts.example.com header.s=default',
+  '        reason="signature verification failed";',
+  '        dmarc=fail action=none header.from=corporate-alerts.example.com',
+  'Return-Path: <bounces@phish-mailer.invalid>',
+  'From: "Security Team" <noreply@corporate-alerts.example.com>',
+  'To: analyst@infosec-lab.invalid',
+  'Subject: [ACTION REQUIRED] Your account password expires in 24 hours',
+  'Date: Wed, 15 Jan 2026 10:33:06 +0000',
+  'Message-ID: <550e8400-e29b-41d4-a716-446655440000@phish-mailer.invalid>',
+  'MIME-Version: 1.0',
+  'Content-Type: text/plain; charset=UTF-8',
+  'X-Mailer: PhishKit/2.1',
+  '',
+  'Your password expires in 24 hours. Reset it now:',
+  '  https://corporate-alerts.example.com.phish-mailer.invalid/reset?token=a1b2c3d4',
+  '',
+  'This is an automated security alert.',
+].join('\n');
+
+const phishingSetupScript = [
+  "cat > /workspace/phishing.eml <<'CM_PHISH_EMAIL'",
+  phishingEmlContent,
+  'CM_PHISH_EMAIL',
+].join('\n');
+
+const phishingCheckScript = [
+  "python3 - <<'CM_PHISH_CHECK'",
+  'import re, sys',
+  'MAX_BYTES = 10_000',
+  'try:',
+  '    with open("/workspace/phishing-findings.txt") as f:',
+  '        content = f.read(MAX_BYTES)',
+  'except Exception:',
+  '    print("FAIL: cannot read phishing-findings.txt")',
+  '    sys.exit(1)',
+  'if not content.strip():',
+  '    print("FAIL: phishing-findings.txt is empty")',
+  '    sys.exit(1)',
+  'if not re.search(r"corporate.alerts|security.team|noreply@|impersonat|spoof", content, re.I):',
+  '    print("FAIL: identify the impersonated sender domain (corporate-alerts.example.com)")',
+  '    sys.exit(1)',
+  'indicators = [',
+  '    bool(re.search(r"return.path|phish.mailer|mismatch|envelope", content, re.I)),',
+  '    bool(re.search(r"spf.*fail|fail.*spf|spf=fail", content, re.I)),',
+  '    bool(re.search(r"dkim.*fail|fail.*dkim|dkim=fail|signature.*fail", content, re.I)),',
+  '    bool(re.search(r"received|relay|hop|chain", content, re.I)),',
+  ']',
+  'if sum(indicators) < 3:',
+  '    print("FAIL: report at least 3 of: Return-Path mismatch, SPF fail, DKIM fail, suspicious Received chain")',
+  '    sys.exit(1)',
+  'print("PASS: phishing-findings.txt is valid.")',
+  'CM_PHISH_CHECK',
+].join('\n');
+
 const challengeCatalog = {
   'linux-basics': {
     title: 'Linux Basics Warmup',
@@ -432,6 +498,43 @@ const challengeCatalog = {
       "    print(f'UA: {ua}  count: {len(hits)}')",
       '    for ip, ts, path in hits[:3]:',
       "        print(f'  {ip}  {ts}  {path}')",
+    ].join('\n'),
+  },
+};
+
+  'phishing-header': {
+    title: 'Phishing Header Analysis',
+    difficulty: 'Intermediate',
+    description:
+      'Examine synthetic email headers containing a display-name lure and authentication failures that indicate sender spoofing.',
+    objective:
+      'Identify at least 3 spoofing indicators from phishing.eml (Return-Path mismatch, SPF failure, DKIM failure, suspicious Received chain) and write your findings to phishing-findings.txt.',
+    steps: [
+      'Read the raw email headers: cat /workspace/phishing.eml',
+      'Note the From display address vs the actual Return-Path envelope sender',
+      'Check Authentication-Results for spf=, dkim=, and dmarc= outcomes',
+      'Trace the Received headers to spot unexpected relay hops',
+      'Write phishing-findings.txt: name the impersonated domain and at least 3 indicators',
+      'Run the checker: check',
+    ],
+    firstCommand: 'cat /workspace/phishing.eml',
+    setupScript: phishingSetupScript,
+    checkScript: phishingCheckScript,
+    starterLang: 'python',
+    starterCode: [
+      '# Inspect email headers to find spoofing indicators.',
+      '# Save this file, then run: python3 /workspace/inspect.py',
+      '',
+      "with open('/workspace/phishing.eml') as f:",
+      '    raw = f.read()',
+      '',
+      '# Headers end at the first blank line',
+      "header_section = raw.split('\\n\\n')[0]",
+      '',
+      'key_headers = ["From", "Return-Path", "Authentication-Results", "Received", "X-Mailer"]',
+      'for line in header_section.split("\\n"):',
+      '    if any(line.startswith(h) for h in key_headers) or line.startswith("        "):',
+      '        print(line)',
     ].join('\n'),
   },
 };
