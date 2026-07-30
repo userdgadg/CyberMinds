@@ -500,7 +500,6 @@ const challengeCatalog = {
       "        print(f'  {ip}  {ts}  {path}')",
     ].join('\n'),
   },
-};
 
   'phishing-header': {
     title: 'Phishing Header Analysis',
