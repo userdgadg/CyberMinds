@@ -209,7 +209,7 @@ test.describe('CTF catalog / terminal challenge registry consistency', () => {
     await page.goto(terminalMockUrl(ids[0]));
     await waitForMockReady(page);
     const registryIds = await page.evaluate(() =>
-      Object.keys(window.challengeCatalog || {})
+      Object.keys(challengeCatalog || {})
     );
     expect(
       registryIds.length,
@@ -240,7 +240,7 @@ test.describe('CTF catalog / terminal challenge registry consistency', () => {
         { timeout: 10_000 }
       );
 
-      const activeId = await page.evaluate(() => window.activeChallengeId);
+      const activeId = await page.evaluate(() => activeChallengeId);
       expect(
         activeId,
         `challenge "${challengeId}" from the catalog did not become active ` +
@@ -249,7 +249,7 @@ test.describe('CTF catalog / terminal challenge registry consistency', () => {
       ).toBe(challengeId);
 
       const registryEntry = await page.evaluate(
-        (id) => window.challengeCatalog[id],
+        (id) => challengeCatalog[id],
         challengeId
       );
       expect(
