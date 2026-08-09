@@ -19,6 +19,7 @@ var challengeOrder = []string{
 	"incident-timeline",
 	"suspicious-beaconing",
 	"phishing-header",
+	"iam-least-privilege",
 }
 
 // ChallengeProgress tracks which challenges a session has completed.

@@ -713,6 +713,68 @@ test.describe('Mock terminal', () => {
     await expect(page.locator('#toast')).toContainText(/completed/i);
   });
 
+  test('iam-least-privilege challenge seeds policy files and passes checker with scoped policy', async ({
+    page,
+  }) => {
+    await page.goto(
+      '/HTML/terminal/index.html?challenge=iam-least-privilege&mockTerminal=1'
+    );
+    await waitForMockReady(page);
+
+    await expect(page.locator('#challengeTitle')).toHaveText(
+      'IAM Least Privilege',
+      { timeout: 30_000 }
+    );
+
+    // Confirm mock files were seeded
+    const policyContent = await page.evaluate(
+      () => window.getMockFile('policy.json') || ''
+    );
+    expect(policyContent).toContain('"Action": "*"');
+    expect(policyContent).toContain('"Resource": "*"');
+
+    const reqs = await page.evaluate(
+      () => window.getMockFile('requirements.txt') || ''
+    );
+    expect(reqs).toContain('cm-backup-data-123456789012');
+    expect(reqs).toContain('s3:GetObject');
+
+    // Seed a passing least-privilege policy
+    await page.evaluate(() => {
+      const passing = JSON.stringify(
+        {
+          Version: '2012-10-17',
+          Statement: [
+            {
+              Sid: 'S3BackupRead',
+              Effect: 'Allow',
+              Action: ['s3:GetObject', 's3:ListBucket'],
+              Resource: [
+                'arn:aws:s3:::cm-backup-data-123456789012/prod/daily/*',
+                'arn:aws:s3:::cm-backup-data-123456789012',
+              ],
+            },
+            {
+              Sid: 'CWLWrite',
+              Effect: 'Allow',
+              Action: ['logs:CreateLogStream', 'logs:PutLogEvents'],
+              Resource: [
+                'arn:aws:logs:us-east-1:123456789012:log-group:/backup/cm-agent:*',
+              ],
+            },
+          ],
+        },
+        null,
+        2
+      );
+      window.setMockFile('policy.json', passing);
+    });
+
+    await page.locator('#checkSolutionBtn').click();
+    await expect(page.locator('#progressChip')).toContainText('1/');
+    await expect(page.locator('#toast')).toContainText(/completed/i);
+  });
+
   test('draft autosaves before a fast reload and restores the edit', async ({
     page,
   }) => {

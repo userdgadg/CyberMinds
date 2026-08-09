@@ -43,6 +43,9 @@ func TestGetChallengeIndex(t *testing.T) {
 	if got := getChallengeIndex("phishing-header"); got != 6 {
 		t.Fatalf("expected phishing-header index 6, got %d", got)
 	}
+	if got := getChallengeIndex("iam-least-privilege"); got != 7 {
+		t.Fatalf("expected iam-least-privilege index 7, got %d", got)
+	}
 	if got := getChallengeIndex("unknown"); got != -1 {
 		t.Fatalf("expected -1 for unknown challenge, got %d", got)
 	}
@@ -144,7 +147,7 @@ func TestHandleCompleteChallengeAndAccessFlow(t *testing.T) {
 	})
 
 	t.Run("can complete remaining challenges including suspicious beaconing", func(t *testing.T) {
-		for _, challengeID := range []string{"priv-esc", "incident-timeline", "suspicious-beaconing"} {
+		for _, challengeID := range []string{"priv-esc", "incident-timeline", "suspicious-beaconing", "phishing-header", "iam-least-privilege"} {
 			req := httptest.NewRequest(http.MethodPost, "/api/session/s1/progress/"+challengeID, nil)
 			req = mux.SetURLVars(req, map[string]string{"sessionId": "s1", "challengeId": challengeID})
 			rr := httptest.NewRecorder()

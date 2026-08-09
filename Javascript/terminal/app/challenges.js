@@ -105,6 +105,10 @@ function ensureChallengeWorkspace(challenge) {
     if (activeChallengeId === 'phishing-header') {
       setMockFile('phishing.eml', `${phishingEmlContent}\n`);
     }
+    if (activeChallengeId === 'iam-least-privilege') {
+      setMockFile('policy.json', `${iamPolicyContent}\n`);
+      setMockFile('requirements.txt', `${iamRequirementsContent}\n`);
+    }
     syncWorkspaceFiles();
     return;
   }
@@ -315,6 +319,38 @@ function checkChallengeSolution() {
           /received|relay|hop|chain/i.test(findings),
         ];
         return indicators.filter(Boolean).length >= 3;
+      })(),
+      'iam-least-privilege': (() => {
+        const raw = getMockFile('policy.json') || '';
+        if (!raw.trim()) return false;
+        let policy;
+        try { policy = JSON.parse(raw); } catch { return false; }
+        const stmts = policy.Statement || [];
+        if (!stmts.length) return false;
+        const allowedActions = new Set();
+        const allowedResources = new Set();
+        for (const stmt of stmts) {
+          if (stmt.Effect !== 'Allow') continue;
+          const principal = stmt.Principal;
+          if (principal === '*' || (principal && principal.AWS === '*')) return false;
+          let actions = stmt.Action || [];
+          let resources = stmt.Resource || [];
+          if (typeof actions === 'string') actions = [actions];
+          if (typeof resources === 'string') resources = [resources];
+          for (const a of actions) {
+            if (a === '*' || a.endsWith(':*')) return false;
+            allowedActions.add(a.toLowerCase());
+          }
+          for (const r of resources) {
+            if (r === '*') return false;
+            allowedResources.add(r.toLowerCase());
+          }
+        }
+        if (!allowedActions.has('s3:getobject')) return false;
+        if (!allowedActions.has('s3:listbucket')) return false;
+        if (!allowedActions.has('logs:putlogevents')) return false;
+        if (![...allowedResources].some((r) => r.includes('cm-backup-data-123456789012'))) return false;
+        return true;
       })(),
     };
     const passed = !!checksByChallenge[activeChallengeId];
