@@ -106,8 +106,12 @@ function ensureChallengeWorkspace(challenge) {
       setMockFile('phishing.eml', `${phishingEmlContent}\n`);
     }
     if (activeChallengeId === 'iam-least-privilege') {
-      setMockFile('policy.json', `${iamPolicyContent}\n`);
-      setMockFile('requirements.txt', `${iamRequirementsContent}\n`);
+      if (!hasMockFile('policy.json')) {
+        setMockFile('policy.json', `${iamPolicyContent}\n`);
+      }
+      if (!hasMockFile('requirements.txt')) {
+        setMockFile('requirements.txt', `${iamRequirementsContent}\n`);
+      }
     }
     syncWorkspaceFiles();
     return;
@@ -311,7 +315,7 @@ function checkChallengeSolution() {
       'phishing-header': (() => {
         const findings = getMockFile('phishing-findings.txt') || '';
         if (!findings.trim()) return false;
-        if (!/corporate.alerts|security.team|noreply@|impersonat|spoof/i.test(findings)) return false;
+        if (!/\bcorporate-alerts\.example\.com\b/i.test(findings)) return false;
         const indicators = [
           /return.path|phish.mailer|mismatch|envelope/i.test(findings),
           /spf.*fail|fail.*spf|spf=fail/i.test(findings),
@@ -326,31 +330,40 @@ function checkChallengeSolution() {
         let policy;
         try { policy = JSON.parse(raw); } catch { return false; }
         const stmts = policy.Statement || [];
-        if (!stmts.length) return false;
-        const allowedActions = new Set();
-        const allowedResources = new Set();
+        if (!Array.isArray(stmts) || !stmts.length) return false;
+        const allowedPairs = new Set();
         for (const stmt of stmts) {
+          if (!stmt || typeof stmt !== 'object') return false;
           if (stmt.Effect !== 'Allow') continue;
+          if (stmt.NotAction || stmt.NotResource) return false;
           const principal = stmt.Principal;
-          if (principal === '*' || (principal && principal.AWS === '*')) return false;
+          if (
+            principal === '*' ||
+            (principal &&
+              typeof principal === 'object' &&
+              (principal.AWS === '*' ||
+                (Array.isArray(principal.AWS) && principal.AWS.includes('*'))))
+          ) return false;
           let actions = stmt.Action || [];
           let resources = stmt.Resource || [];
           if (typeof actions === 'string') actions = [actions];
           if (typeof resources === 'string') resources = [resources];
+          if (!Array.isArray(actions) || !Array.isArray(resources)) return false;
           for (const a of actions) {
-            if (a === '*' || a.endsWith(':*')) return false;
-            allowedActions.add(a.toLowerCase());
+            if (typeof a !== 'string' || !Object.prototype.hasOwnProperty.call(iamRequiredPermissions, a.toLowerCase())) return false;
           }
           for (const r of resources) {
-            if (r === '*') return false;
-            allowedResources.add(r.toLowerCase());
+            if (typeof r !== 'string' || !Object.values(iamRequiredPermissions).includes(r.toLowerCase())) return false;
+          }
+          for (const a of actions) {
+            for (const r of resources) {
+              allowedPairs.add(`${a.toLowerCase()}\n${r.toLowerCase()}`);
+            }
           }
         }
-        if (!allowedActions.has('s3:getobject')) return false;
-        if (!allowedActions.has('s3:listbucket')) return false;
-        if (!allowedActions.has('logs:putlogevents')) return false;
-        if (![...allowedResources].some((r) => r.includes('cm-backup-data-123456789012'))) return false;
-        return true;
+        return Object.entries(iamRequiredPermissions).every(([action, resource]) =>
+          allowedPairs.has(`${action}\n${resource}`)
+        ) && allowedPairs.size === Object.keys(iamRequiredPermissions).length;
       })(),
     };
     const passed = !!checksByChallenge[activeChallengeId];

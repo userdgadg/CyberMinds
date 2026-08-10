@@ -739,6 +739,24 @@ test.describe('Mock terminal', () => {
     expect(reqs).toContain('cm-backup-data-123456789012');
     expect(reqs).toContain('s3:GetObject');
 
+    await page.evaluate(() => {
+      window.setMockFile(
+        'policy.json',
+        JSON.stringify({
+          Version: '2012-10-17',
+          Statement: [
+            {
+              Effect: 'Allow',
+              Action: ['s3:GetObject', 's3:ListBucket', 's3:DeleteObject'],
+              Resource: 'arn:aws:s3:::cm-backup-data-123456789012',
+            },
+          ],
+        })
+      );
+    });
+    await page.locator('#checkSolutionBtn').click();
+    await expect(page.locator('#progressChip')).toContainText('0/');
+
     // Seed a passing least-privilege policy
     await page.evaluate(() => {
       const passing = JSON.stringify(
@@ -748,11 +766,15 @@ test.describe('Mock terminal', () => {
             {
               Sid: 'S3BackupRead',
               Effect: 'Allow',
-              Action: ['s3:GetObject', 's3:ListBucket'],
-              Resource: [
+              Action: 's3:GetObject',
+              Resource:
                 'arn:aws:s3:::cm-backup-data-123456789012/prod/daily/*',
-                'arn:aws:s3:::cm-backup-data-123456789012',
-              ],
+            },
+            {
+              Sid: 'S3BackupList',
+              Effect: 'Allow',
+              Action: 's3:ListBucket',
+              Resource: 'arn:aws:s3:::cm-backup-data-123456789012',
             },
             {
               Sid: 'CWLWrite',
