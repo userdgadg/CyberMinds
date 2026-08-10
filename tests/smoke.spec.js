@@ -672,6 +672,131 @@ test.describe('Mock terminal', () => {
     await expect(page.locator('#continueLearningCtfCount')).toContainText('1');
   });
 
+  test('phishing-header challenge loads mock email and passes checker with valid findings', async ({
+    page,
+  }) => {
+    await page.goto(
+      '/HTML/terminal/index.html?challenge=phishing-header&mockTerminal=1'
+    );
+    await waitForMockReady(page);
+
+    await expect(page.locator('#challengeTitle')).toHaveText(
+      'Phishing Header Analysis',
+      { timeout: 30_000 }
+    );
+
+    // Confirm the mock .eml file was seeded
+    const emlContent = await page.evaluate(
+      () => window.getMockFile('phishing.eml') || ''
+    );
+    expect(emlContent).toContain('Return-Path');
+    expect(emlContent).toContain('phish-mailer.invalid');
+    expect(emlContent).toContain('spf=fail');
+    expect(emlContent).toContain('dkim=fail');
+
+    // Seed a passing findings file
+    await page.evaluate(() => {
+      window.setMockFile(
+        'phishing-findings.txt',
+        [
+          'Impersonated domain: corporate-alerts.example.com (Security Team)',
+          'Return-Path mismatch: envelope sender is bounces@phish-mailer.invalid',
+          'SPF fail: 203.0.113.99 is not a permitted sender for corporate-alerts.example.com',
+          'DKIM fail: signature verification failed for corporate-alerts.example.com',
+          'Suspicious Received chain: mail relayed through phish-mailer.invalid',
+        ].join('\n')
+      );
+    });
+
+    await page.locator('#checkSolutionBtn').click();
+    await expect(page.locator('#progressChip')).toContainText('1/');
+    await expect(page.locator('#toast')).toContainText(/completed/i);
+  });
+
+  test('iam-least-privilege challenge seeds policy files and passes checker with scoped policy', async ({
+    page,
+  }) => {
+    await page.goto(
+      '/HTML/terminal/index.html?challenge=iam-least-privilege&mockTerminal=1'
+    );
+    await waitForMockReady(page);
+
+    await expect(page.locator('#challengeTitle')).toHaveText(
+      'IAM Least Privilege',
+      { timeout: 30_000 }
+    );
+
+    // Confirm mock files were seeded
+    const policyContent = await page.evaluate(
+      () => window.getMockFile('policy.json') || ''
+    );
+    expect(policyContent).toContain('"Action": "*"');
+    expect(policyContent).toContain('"Resource": "*"');
+
+    const reqs = await page.evaluate(
+      () => window.getMockFile('requirements.txt') || ''
+    );
+    expect(reqs).toContain('cm-backup-data-123456789012');
+    expect(reqs).toContain('s3:GetObject');
+
+    await page.evaluate(() => {
+      window.setMockFile(
+        'policy.json',
+        JSON.stringify({
+          Version: '2012-10-17',
+          Statement: [
+            {
+              Effect: 'Allow',
+              Action: ['s3:GetObject', 's3:ListBucket', 's3:DeleteObject'],
+              Resource: 'arn:aws:s3:::cm-backup-data-123456789012',
+            },
+          ],
+        })
+      );
+    });
+    await page.locator('#checkSolutionBtn').click();
+    await expect(page.locator('#progressChip')).toContainText('0/');
+
+    // Seed a passing least-privilege policy
+    await page.evaluate(() => {
+      const passing = JSON.stringify(
+        {
+          Version: '2012-10-17',
+          Statement: [
+            {
+              Sid: 'S3BackupRead',
+              Effect: 'Allow',
+              Action: 's3:GetObject',
+              Resource:
+                'arn:aws:s3:::cm-backup-data-123456789012/prod/daily/*',
+            },
+            {
+              Sid: 'S3BackupList',
+              Effect: 'Allow',
+              Action: 's3:ListBucket',
+              Resource: 'arn:aws:s3:::cm-backup-data-123456789012',
+            },
+            {
+              Sid: 'CWLWrite',
+              Effect: 'Allow',
+              Action: ['logs:CreateLogStream', 'logs:PutLogEvents'],
+              Resource: [
+                'arn:aws:logs:us-east-1:123456789012:log-group:/backup/cm-agent:*',
+              ],
+            },
+          ],
+        },
+        null,
+        2
+      );
+      window.setMockFile('policy.json', passing);
+    });
+
+    await page.locator('#checkSolutionBtn').click();
+    await expect(page.locator('#progressChip')).toContainText('1/');
+    await expect(page.locator('#toast')).toContainText(/completed/i);
+  });
+
   test('draft autosaves before a fast reload and restores the edit', async ({
     page,
   }) => {
