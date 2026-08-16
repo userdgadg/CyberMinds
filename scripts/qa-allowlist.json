@@ -3,12 +3,12 @@
     "https://fonts.googleapis.com",
     "https://fonts.gstatic.com",
     "https://kit.fontawesome.com",
+    "https://unpkg.com",
     "https://cdn.jsdelivr.net",
-    "https://cdnjs.cloudflare.com",
-    "https://www.chatbase.co",
-    "https://www.youtube.com",
+    "https://cloud.umami.is",
     "https://i.simmer.io"
   ],
   "skipFiles": [],
-  "skipAltChecks": []
+  "skipAltChecks": [],
+  "note": "See docs/ORIGINS.md for full inventory with purpose, data flow, and security controls."
 }
