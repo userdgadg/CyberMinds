@@ -66,8 +66,14 @@ function cleanReference(value) {
 
 function checkExternal(file, value, type) {
   try {
-    if (!allowedOrigins.has(new URL(value).origin)) {
-      report(file, `Unallowlisted external ${type}: "${cleanReference(value)}"`);
+    const url = new URL(value);
+    const origin = url.origin;
+    if (!allowedOrigins.has(origin)) {
+      const cleanRef = cleanReference(value);
+      report(
+        file,
+        `Unallowlisted external ${type}: "${cleanRef}"\n    To approve this origin:\n    1. Update scripts/qa-allowlist.json with the origin: "${origin}"\n    2. Update docs/ORIGINS.md with purpose, data flow, and security justification\n    3. See docs/ORIGINS.md#appendix-how-to-add-a-new-external-origin for the full checklist`
+      );
     }
   } catch {
     report(file, `Malformed external ${type}: "${cleanReference(value)}"`);

@@ -20,12 +20,35 @@ func securityHeadersMiddleware(next http.Handler) http.Handler {
 		w.Header().Set("X-XSS-Protection", "1; mode=block")
 		w.Header().Set("Referrer-Policy", "strict-origin-when-cross-origin")
 
+		// CSP for non-WebSocket requests (terminal HTML pages, health checks, etc.)
+		// WebSocket requests skip CSP header to avoid blocking the upgrade.
+		// See docs/ORIGINS.md for the complete external origins inventory.
 		if r.Header.Get("Upgrade") != "websocket" {
-			w.Header().Set("Content-Security-Policy", "default-src 'self' https://cdn.jsdelivr.net; style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net")
+			csp := buildContentSecurityPolicy()
+			w.Header().Set("Content-Security-Policy-Report-Only", csp)
 		}
 
 		next.ServeHTTP(w, r)
 	})
+}
+
+// buildContentSecurityPolicy constructs the CSP header for the terminal backend.
+// Approved external origins are:
+// - https://cdn.jsdelivr.net (xterm.js, Monaco Editor CDN)
+// CSP is report-only to detect violations without breaking functionality.
+func buildContentSecurityPolicy() string {
+	return strings.TrimSpace(strings.Join([]string{
+		"default-src 'self'",
+		"script-src 'self' https://cdn.jsdelivr.net",
+		"style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline'",
+		"font-src 'self'",
+		"img-src 'self' data:",
+		"connect-src 'self'",
+		"frame-ancestors 'none'",
+		"base-uri 'self'",
+		"form-action 'self'",
+		"report-uri /api/csp-report",
+	}, "; "))
 }
 
 func corsMiddleware(next http.Handler) http.Handler {

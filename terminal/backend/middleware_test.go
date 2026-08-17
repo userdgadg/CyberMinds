@@ -79,8 +79,11 @@ func TestSecurityHeadersMiddleware(t *testing.T) {
 	if rr.Header().Get("X-Content-Type-Options") != "nosniff" {
 		t.Fatal("missing X-Content-Type-Options header")
 	}
-	if rr.Header().Get("Content-Security-Policy") == "" {
-		t.Fatal("expected CSP header for non-websocket request")
+	if rr.Header().Get("Content-Security-Policy-Report-Only") == "" {
+		t.Fatal("expected report-only CSP header for non-websocket request")
+	}
+	if rr.Header().Get("Content-Security-Policy") != "" {
+		t.Fatal("did not expect enforced CSP header")
 	}
 }
 

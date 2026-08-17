@@ -16,6 +16,7 @@
  *   7. Completing a mock challenge updates the progress chip and shows a toast.
  */
 const { test, expect } = require('@playwright/test');
+const originAllowlist = require('../scripts/qa-allowlist.json');
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -871,5 +872,169 @@ test.describe('Mock terminal', () => {
     await expect(page.locator('#editor')).not.toContainText(
       'keep this after reload'
     );
+  });
+});
+
+// ─── Security: External Origins & CSP ───────────────────────────────────────
+
+test.describe('Security: External Origins & CSP', () => {
+  // Static QA owns the external-origin list; the terminal API is not an HTML
+  // resource, so keep its browser connection origin explicit here.
+  const APPROVED_ORIGINS = new Set([
+    ...originAllowlist.externalUrls,
+    'https://cyberminds-terminal-20260621-ncus.northcentralus.cloudapp.azure.com',
+  ].map((origin) => new URL(origin).origin));
+
+  test('home page loads only from approved external origins', async ({
+    page,
+  }) => {
+    const externalRequests = [];
+
+    // Intercept all external requests
+    page.on('request', (request) => {
+      const url = request.url();
+      if (
+        url.startsWith('http://') ||
+        url.startsWith('https://')
+      ) {
+        try {
+          const origin = new URL(url).origin;
+          if (
+            !url.startsWith('http://localhost') &&
+            !url.startsWith('http://127.0.0.1')
+          ) {
+            externalRequests.push({ url, origin });
+          }
+        } catch {
+          // Ignore malformed URLs
+        }
+      }
+    });
+
+    await page.goto('/');
+
+    // Extract unique origins
+    const uniqueOrigins = new Set(
+      externalRequests.map((r) => r.origin)
+    );
+
+    // Check that all origins are approved (or internal localhost)
+    for (const origin of uniqueOrigins) {
+      if (
+        !origin.startsWith('http://localhost') &&
+        !origin.startsWith('http://127.0.0.1')
+      ) {
+        expect(
+          APPROVED_ORIGINS.has(origin),
+          `Unexpected external origin: ${origin}`
+        ).toBe(true);
+      }
+    }
+  });
+
+  test('terminal page loads only from approved external origins', async ({
+    page,
+  }) => {
+    const externalRequests = [];
+
+    page.on('request', (request) => {
+      const url = request.url();
+      if (
+        url.startsWith('http://') ||
+        url.startsWith('https://')
+      ) {
+        try {
+          const origin = new URL(url).origin;
+          if (
+            !url.startsWith('http://localhost') &&
+            !url.startsWith('http://127.0.0.1')
+          ) {
+            externalRequests.push({ url, origin });
+          }
+        } catch {
+          // Ignore malformed URLs
+        }
+      }
+    });
+
+    await page.goto(TERMINAL_MOCK_URL);
+    await waitForMockReady(page);
+
+    const uniqueOrigins = new Set(
+      externalRequests.map((r) => r.origin)
+    );
+
+    for (const origin of uniqueOrigins) {
+      if (
+        !origin.startsWith('http://localhost') &&
+        !origin.startsWith('http://127.0.0.1')
+      ) {
+        expect(
+          APPROVED_ORIGINS.has(origin),
+          `Unexpected external origin on terminal page: ${origin}`
+        ).toBe(true);
+      }
+    }
+  });
+
+  test('no external resource requests use HTTP (insecure)', async ({
+    page,
+  }) => {
+    const insecureRequests = [];
+
+    page.on('request', (request) => {
+      const url = request.url();
+      if (url.startsWith('http://') && !url.startsWith('http://localhost') && !url.startsWith('http://127.0.0.1')) {
+        insecureRequests.push(url);
+      }
+    });
+
+    await page.goto('/');
+    await page.goto('/HTML/course_Contents.html');
+
+    expect(
+      insecureRequests.length,
+      `Found ${insecureRequests.length} insecure (HTTP) external resource(s): ${insecureRequests.join(', ')}`
+    ).toBe(0);
+  });
+
+  test('analytics script (Umami) does not send credentials or learner PII', async ({
+    page,
+  }) => {
+    const analyticsRequests = [];
+
+    page.on('request', (request) => {
+      if (request.url().includes('cloud.umami.is')) {
+        analyticsRequests.push({
+          url: request.url(),
+          method: request.method(),
+          postData: request.postDataJSON?.() || null,
+        });
+      }
+    });
+
+    await page.goto('/');
+
+    // Verify that any analytics requests do not include sensitive data
+    for (const req of analyticsRequests) {
+      const url = req.url;
+      const data = req.postData || {};
+
+      // Check URL for blocked keys (token, sessionid, password, etc.)
+      const blockedKeys = ['token', 'sessionid', 'session_id', 'userid', 'user_id', 'email', 'password', 'key', 'secret', 'auth'];
+      for (const key of blockedKeys) {
+        expect(
+          url.toLowerCase().includes(key),
+          `Analytics request URL contains blocked key: ${key}`
+        ).toBe(false);
+
+        if (data.payload) {
+          expect(
+            JSON.stringify(data.payload).toLowerCase().includes(key),
+            `Analytics payload contains blocked key: ${key}`
+          ).toBe(false);
+        }
+      }
+    }
   });
 });

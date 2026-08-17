@@ -29,6 +29,7 @@ func main() {
 	router.HandleFunc("/api/session/{sessionId}", deleteSession).Methods("DELETE", "OPTIONS")
 	router.HandleFunc("/api/session/{sessionId}/files", listSessionFiles).Methods("GET", "OPTIONS")
 	router.HandleFunc("/api/session/{sessionId}/file", readSessionFile).Methods("GET", "OPTIONS")
+	router.HandleFunc("/api/csp-report", handleCSPReport).Methods("POST", "OPTIONS")
 	router.HandleFunc("/health", healthCheck).Methods("GET")
 	router.HandleFunc("/api/session/{sessionId}/progress", handleGetProgress).Methods("GET", "OPTIONS")
 	router.HandleFunc("/api/session/{sessionId}/progress/{challengeId}", handleCompleteChallenge).Methods("POST", "OPTIONS")
