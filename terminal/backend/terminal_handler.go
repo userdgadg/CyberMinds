@@ -102,6 +102,7 @@ func handleTerminal(w http.ResponseWriter, r *http.Request) {
 
 	go func() {
 		defer close(done)
+		defer conn.Close()
 		buf := make([]byte, readBufferSize)
 		for {
 			n, err := attachResp.Reader.Read(buf)

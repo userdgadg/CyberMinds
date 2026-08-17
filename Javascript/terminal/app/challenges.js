@@ -102,6 +102,17 @@ function ensureChallengeWorkspace(challenge) {
     if (activeChallengeId === 'idor-triage') {
       setMockFile('requests.log', `${idorRequestLog}\n`);
     }
+    if (activeChallengeId === 'phishing-header') {
+      setMockFile('phishing.eml', `${phishingEmlContent}\n`);
+    }
+    if (activeChallengeId === 'iam-least-privilege') {
+      if (!hasMockFile('policy.json')) {
+        setMockFile('policy.json', `${iamPolicyContent}\n`);
+      }
+      if (!hasMockFile('requirements.txt')) {
+        setMockFile('requirements.txt', `${iamRequirementsContent}\n`);
+      }
+    }
     syncWorkspaceFiles();
     return;
   }
@@ -301,6 +312,59 @@ function checkChallengeSolution() {
         if (!/idor|insecure.{0,20}direct|object.{0,20}ref|sequential|enumerat|unauthori/i.test(idorReport)) return false;
         return /(authoriz|least.{0,10}priv|ownership|permission|access.{0,10}control|object.{0,10}level)/i.test(idorReport);
       })(),
+      'phishing-header': (() => {
+        const findings = getMockFile('phishing-findings.txt') || '';
+        if (!findings.trim()) return false;
+        if (!/\bcorporate-alerts\.example\.com\b/i.test(findings)) return false;
+        const indicators = [
+          /return.path|phish.mailer|mismatch|envelope/i.test(findings),
+          /spf.*fail|fail.*spf|spf=fail/i.test(findings),
+          /dkim.*fail|fail.*dkim|dkim=fail|signature.*fail/i.test(findings),
+          /received|relay|hop|chain/i.test(findings),
+        ];
+        return indicators.filter(Boolean).length >= 3;
+      })(),
+      'iam-least-privilege': (() => {
+        const raw = getMockFile('policy.json') || '';
+        if (!raw.trim()) return false;
+        let policy;
+        try { policy = JSON.parse(raw); } catch { return false; }
+        const stmts = policy.Statement || [];
+        if (!Array.isArray(stmts) || !stmts.length) return false;
+        const allowedPairs = new Set();
+        for (const stmt of stmts) {
+          if (!stmt || typeof stmt !== 'object') return false;
+          if (stmt.Effect !== 'Allow') continue;
+          if (stmt.NotAction || stmt.NotResource) return false;
+          const principal = stmt.Principal;
+          if (
+            principal === '*' ||
+            (principal &&
+              typeof principal === 'object' &&
+              (principal.AWS === '*' ||
+                (Array.isArray(principal.AWS) && principal.AWS.includes('*'))))
+          ) return false;
+          let actions = stmt.Action || [];
+          let resources = stmt.Resource || [];
+          if (typeof actions === 'string') actions = [actions];
+          if (typeof resources === 'string') resources = [resources];
+          if (!Array.isArray(actions) || !Array.isArray(resources)) return false;
+          for (const a of actions) {
+            if (typeof a !== 'string' || !Object.prototype.hasOwnProperty.call(iamRequiredPermissions, a.toLowerCase())) return false;
+          }
+          for (const r of resources) {
+            if (typeof r !== 'string' || !Object.values(iamRequiredPermissions).includes(r.toLowerCase())) return false;
+          }
+          for (const a of actions) {
+            for (const r of resources) {
+              allowedPairs.add(`${a.toLowerCase()}\n${r.toLowerCase()}`);
+            }
+          }
+        }
+        return Object.entries(iamRequiredPermissions).every(([action, resource]) =>
+          allowedPairs.has(`${action}\n${resource}`)
+        ) && allowedPairs.size === Object.keys(iamRequiredPermissions).length;
+      })(),
     };
     const passed = !!checksByChallenge[activeChallengeId];
 
@@ -322,6 +386,7 @@ function checkChallengeSolution() {
         applyChallengeStarter(true);
         showToast('Challenge completed. Moved to next.');
       } else {
+        renderProgressTimeline();
         showToast('All challenges completed.');
       }
       return;
@@ -427,6 +492,7 @@ function handleCheckOutput(chunk) {
       applyChallengeStarter(true);
       showToast('Challenge completed. Moved to next.');
     } else {
+      renderProgressTimeline();
       showToast('All challenges completed.');
     }
     return;

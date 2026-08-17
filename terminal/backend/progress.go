@@ -18,6 +18,8 @@ var challengeOrder = []string{
 	"priv-esc",
 	"incident-timeline",
 	"suspicious-beaconing",
+	"phishing-header",
+	"iam-least-privilege",
 }
 
 // ChallengeProgress tracks which challenges a session has completed.

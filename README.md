@@ -10,13 +10,13 @@ Cybersecurity you actually practice, not just read about. Short courses, a real 
 
 ## What It Does
 
-CyberMinds pairs short lessons and quizzes with a real Linux terminal, so you're running commands instead of just reading about them. Six guided CTF challenges give you something concrete to apply what you've learned to, and an AI chatbot is available the entire time if you get stuck.
+CyberMinds pairs short lessons and quizzes with a real Linux terminal, so you're running commands instead of just reading about them. Eight guided CTF challenges give you something concrete to apply what you've learned to, and an AI chatbot is available the entire time if you get stuck.
 
 ## Features
 
 - 12 self-paced courses: security fundamentals, cryptography, Linux, networking, penetration testing, cloud security
 - A real Linux terminal in the browser, isolated Docker container per session
-- 6 guided CTF challenges
+- 8 guided CTF challenges
 - AI chatbot for help, anytime
 - Local progress tracking, privacy-first analytics, no personal data collected
 
@@ -40,6 +40,8 @@ Pick a course, read the lesson, take the quiz, then practice in the terminal and
 - **Privilege Escalation Trace** — follow how a low-priv user became root
 - **Incident Timeline Reconstruction** — piece together what happened, and when
 - **Suspicious Beaconing** — spot malware phoning home in network traffic
+- **Phishing Header Analysis** — identify sender spoofing from synthetic email headers
+- **IAM Least Privilege** — repair an over-permissive synthetic cloud policy
 
 ## Getting Started
 
