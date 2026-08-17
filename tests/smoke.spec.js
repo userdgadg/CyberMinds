@@ -16,6 +16,7 @@
  *   7. Completing a mock challenge updates the progress chip and shows a toast.
  */
 const { test, expect } = require('@playwright/test');
+const originAllowlist = require('../scripts/qa-allowlist.json');
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
@@ -877,17 +878,12 @@ test.describe('Mock terminal', () => {
 // ─── Security: External Origins & CSP ───────────────────────────────────────
 
 test.describe('Security: External Origins & CSP', () => {
-  // Approved external origins from docs/ORIGINS.md
+  // Static QA owns the external-origin list; the terminal API is not an HTML
+  // resource, so keep its browser connection origin explicit here.
   const APPROVED_ORIGINS = new Set([
-    'https://fonts.googleapis.com',
-    'https://fonts.gstatic.com',
-    'https://kit.fontawesome.com',
-    'https://unpkg.com',
-    'https://cdn.jsdelivr.net',
-    'https://cloud.umami.is',
-    'https://i.simmer.io',
+    ...originAllowlist.externalUrls,
     'https://cyberminds-terminal-20260621-ncus.northcentralus.cloudapp.azure.com',
-  ]);
+  ].map((origin) => new URL(origin).origin));
 
   test('home page loads only from approved external origins', async ({
     page,

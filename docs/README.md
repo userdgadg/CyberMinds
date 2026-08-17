@@ -150,13 +150,12 @@ Public Learner Pages (GitHub Pages)
   ├─ HTML/CSS/JS served by GitHub Pages
   ├─ Cannot set HTTP response headers (GitHub limitation)
   ├─ CSP validated via static QA on every commit
-  └─ External CDNs: Google Fonts, FontAwesome, jsDelivr, Boxicons, Umami Analytics
-       └─ All requests validated against approved list
+  └─ External origins validated against the approved list
 
 Terminal Page (GitHub Pages)
   ├─ HTML/CSS/JS served by GitHub Pages
   ├─ Links to Terminal WebSocket/API
-  └─ Origin header checked by backend on every request
+  └─ Supplied Origin header checked by backend
 
 Terminal Backend (Azure VM)
   ├─ REST API + WebSocket for learner code execution

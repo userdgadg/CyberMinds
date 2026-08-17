@@ -26,6 +26,7 @@ This document is the **source of truth** for all approved external origins used 
 | `https://fonts.googleapis.com` | Google Fonts metadata & CSS | Stylesheet with font family definitions | None (GET only) | Google | `style-src` | 2025-09-01 |
 | `https://fonts.gstatic.com` | Google Fonts CDN (font files) | WOFF2/TTF font binary files | None (GET only) | Google | `font-src` | 2025-09-01 |
 | `https://kit.fontawesome.com` | FontAwesome icon library | JavaScript (async-loaded) + CSS | Icon kit ID in query string | Cloudflare/FontAwesome | `script-src`, `style-src` | 2025-09-01 |
+| `https://ka-f.fontawesome.com` | FontAwesome runtime assets | Kit CSS and icon assets loaded by the approved kit | Icon kit ID in request path | Cloudflare/FontAwesome | `script-src`, `style-src` | 2026-08-16 |
 | `https://unpkg.com` | Boxicons icon library | CSS stylesheet | Package name in URL path | Cloudflare/Boxicons | `style-src` | 2025-09-01 |
 
 **Data Classification:** Public UI styling only. No learner data.
@@ -68,15 +69,30 @@ This document is the **source of truth** for all approved external origins used 
 
 | Origin | Purpose | Resources | Data Sent | Controlled By | CSP Directive | Approval Date |
 |--------|---------|-----------|-----------|---------------|---------------|---------------|
+| `https://www.chatbase.co` | Chatbase helper and chatbot iframe | Chat helper script and chat iframe | Learner chat messages and page context when Live Help is used | Chatbase | `script-src`, `frame-src` | 2026-08-16 |
+| `https://www.youtube.com` | Educational video embeds | `<iframe>` video player | Video ID and playback requests | YouTube | `frame-src` | 2026-08-16 |
 | `https://i.simmer.io` | Game embed (Course 3 only) | `<iframe>` sandbox embed | None (self-contained game) | Itch.io/Simmer | `frame-src` | 2025-09-01 |
 
-**Data Classification:** Public game state only.
+**Data Classification:** Third-party embed data. Simmer receives public game state; Chatbase receives learner chat messages and page context; YouTube receives playback requests.
 
-**Usage:** Embedded in [`HTML/Courses and Activities/Course 3/Game_Course3.html`](../HTML/Courses%20and%20Activities/Course%203/Game_Course3.html) only.
+**Usage:** Simmer is embedded in [`HTML/Courses and Activities/Course 3/Game_Course3.html`](../HTML/Courses%20and%20Activities/Course%203/Game_Course3.html); Chatbase is used by Live Help; YouTube is used for course videos.
 
 ---
 
-### Group 5: Terminal Backend API & WebSocket
+### Group 5: Learning Resource Links
+
+| Origin | Purpose | Resources | Data Sent | Controlled By | CSP Directive | Approval Date |
+|--------|---------|-----------|-----------|---------------|---------------|---------------|
+| `https://www.duplichecker.com` | ASCII conversion reference | Outbound ASCII-to-text tool link in Course 5 | None unless a learner chooses to leave the site | Duplichecker | N/A (navigation) | 2026-08-16 |
+| `https://www.kali.org` | Kali Linux download reference | Outbound download links in Course 6 | None unless a learner chooses to leave the site | Kali Linux | N/A (navigation) | 2026-08-16 |
+| `https://www.parrotsec.org` | Parrot OS download reference | Outbound download links in Course 6 | None unless a learner chooses to leave the site | Parrot OS | N/A (navigation) | 2026-08-16 |
+| `https://www.virtualbox.org` | VirtualBox download reference | Outbound download link in Course 6 | None unless a learner chooses to leave the site | Oracle VirtualBox | N/A (navigation) | 2026-08-16 |
+
+**Data Classification:** Outbound educational links. The site does not send learner data to these origins automatically.
+
+---
+
+### Group 6: Terminal Backend API & WebSocket
 
 | Origin | Purpose | Resources | Data Sent | Controlled By | CSP Directive | Approval Date |
 |--------|---------|-----------|-----------|---------------|---------------|---------------|
@@ -149,8 +165,9 @@ This document is the **source of truth** for all approved external origins used 
    - Only approved, immutable resources
    - Fallback: UI degrades gracefully if CDN unavailable
 
-2. **Frontend ↔ Terminal Backend (Bidirectional, Authenticated)**
-   - CORS origin check on every request
+2. **Frontend ↔ Terminal Backend (Bidirectional, browser-origin validated)**
+   - CORS checks supplied browser `Origin` headers against an allowlist
+   - CORS is not user authentication; originless non-browser clients are not blocked by this boundary
    - WebSocket upgrade validates `Origin` header
    - Learner code & session data exchanged
    - Backend runs in isolated Docker container
@@ -165,35 +182,36 @@ This document is the **source of truth** for all approved external origins used 
 
 ### GitHub Pages (Static Frontend)
 
-**Host:** `cyber-minds.github.io`  
-**CSP Header:** `Content-Security-Policy-Report-Only`  
-**Why Report-Only:** GitHub Pages does not support headers directly. CSP is set via meta tag in HTML (see [`docs/DEPLOYMENT.md#csp-for-github-pages`](DEPLOYMENT.md#csp-for-github-pages)). Report-only allows us to identify violations without breaking functionality while we transition.
+**Host:** `cyber-minds.github.io`
+**CSP Header:** None (GitHub Pages does not support custom response headers)
+**Boundary:** Static QA plus Playwright runtime origin checks. This is validation at the deployment gate, not browser-enforced CSP.
 
 ```
-Content-Security-Policy-Report-Only: 
+Content-Security-Policy-Report-Only:
   default-src 'self';
-  script-src 'self' https://kit.fontawesome.com https://cdn.jsdelivr.net https://cloud.umami.is;
-  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://kit.fontawesome.com https://unpkg.com https://cdn.jsdelivr.net;
+  script-src 'self' https://kit.fontawesome.com https://ka-f.fontawesome.com https://cdn.jsdelivr.net https://cloud.umami.is https://www.chatbase.co;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://kit.fontawesome.com https://ka-f.fontawesome.com https://unpkg.com https://cdn.jsdelivr.net;
   font-src 'self' https://fonts.gstatic.com;
   img-src 'self' data: https:;
-  frame-src https://i.simmer.io;
+  frame-src https://i.simmer.io https://www.chatbase.co https://www.youtube.com;
   connect-src 'self' https://cyberminds-terminal-20260621-ncus.northcentralus.cloudapp.azure.com https://cloud.umami.is;
   report-uri https://cyberminds-terminal-20260621-ncus.northcentralus.cloudapp.azure.com/api/csp-report
 ```
 
 **Notes:**
-- GitHub Pages cannot set response headers; CSP is embedded as meta tag for documentation purposes
+- This is a reference policy for a future header-capable frontend host; it is not emitted as a response header or HTML meta tag by GitHub Pages.
+- `scripts/qa-static.js` and the Playwright smoke suite enforce the approved-origin boundary for the current frontend deployment.
 - `unsafe-inline` for styles is required for inline CSS in existing templates; a future refactor can move to external stylesheets
 - Learner code executed in isolated backend terminals, not in browser, so `script-src` restrictions do not apply to code editing
 
 ### Terminal Backend API
 
-**Host:** `https://cyberminds-terminal-*.northcentralus.cloudapp.azure.com`  
-**CSP Header:** `Content-Security-Policy-Report-Only`  
-**Applied to:** Non-WebSocket requests (HTML pages served from backend for debugging/health checks)
+**Host:** `https://cyberminds-terminal-*.northcentralus.cloudapp.azure.com`
+**CSP Header:** `Content-Security-Policy-Report-Only`
+**Applied to:** Non-WebSocket API and health responses. The Go backend does not serve the frontend HTML.
 
 ```
-Content-Security-Policy-Report-Only: 
+Content-Security-Policy-Report-Only:
   default-src 'self';
   script-src 'self' https://cdn.jsdelivr.net;
   style-src 'self' https://cdn.jsdelivr.net 'unsafe-inline';
@@ -239,8 +257,8 @@ Content-Security-Policy-Report-Only:
 
 **Enforcement:**
 - All non-WebSocket requests receive CSP report-only header
-- All requests (WebSocket and non-WebSocket) receive CORS origin check
-- If origin not in allowlist, request rejected with 403 Forbidden
+- All requests (WebSocket and non-WebSocket) pass through CORS middleware
+- A supplied origin not in the allowlist is rejected with 403 Forbidden; originless non-browser clients are intentionally allowed
 
 ---
 
@@ -270,7 +288,7 @@ npm run qa:static -- --changed-from <base-ref>
 
 **Backend Endpoint:** `POST /api/csp-report`
 
-**Purpose:** Collect CSP violations from learner browsers in production.
+**Purpose:** Collect CSP violations from clients that explicitly use the backend report-only policy. The GitHub Pages frontend currently uses static and runtime origin checks and does not send reports here.
 
 **Expected Violations (should not occur):**
 - New external resource added without approval
@@ -283,7 +301,7 @@ npm run qa:static -- --changed-from <base-ref>
 3. If legitimate: add origin to allowlist and redeploy
 4. If attack/misconfiguration: block and investigate
 
-**Implementation:** See [`terminal/backend/handlers.go#handleCSPReport`](../terminal/backend/handlers.go) (to be created).
+**Implementation:** See [`terminal/backend/handlers_security.go#handleCSPReport`](../terminal/backend/handlers_security.go). The endpoint accepts reports only from clients that explicitly configure the backend policy; the GitHub Pages frontend currently uses static and runtime checks instead.
 
 ---
 

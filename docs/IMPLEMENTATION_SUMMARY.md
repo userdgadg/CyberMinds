@@ -1,7 +1,7 @@
 # Trust Boundary Validation Implementation Summary
 
-**Date:** 2026-08-16  
-**Status:** Complete  
+**Date:** 2026-08-16
+**Status:** Complete
 **Goal:** Make the trust boundary between the public frontend, third-party resources, and the terminal service explicit and continuously checked.
 
 ---
@@ -27,8 +27,12 @@ A comprehensive, reviewed source of truth listing every approved external origin
 
 - **Group 4: Third-Party Embeds**
   - Simmer.io game embed (Course 3 only)
+  - Chatbase Live Help and YouTube course videos
 
-- **Group 5: Terminal Backend API**
+- **Group 5: Learning Resource Links**
+  - Duplichecker, Kali Linux, Parrot OS, and VirtualBox outbound references
+
+- **Group 6: Terminal Backend API**
   - Azure-hosted WebSocket and REST API endpoint
 
 **For each origin:**
@@ -58,7 +62,7 @@ Includes:
 **Documented in:** [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md)
 
 #### GitHub Pages (Frontend)
-- Report-only CSP declared via meta tag for documentation
+- Static QA and Playwright runtime checks validate approved origins; no CSP meta tag is shipped
 - Static QA validation gates all deployments
 - Cannot set HTTP response headers (GitHub Pages limitation documented explicitly)
 
@@ -79,7 +83,7 @@ Explicitly documents:
 - GitHub Pages **cannot** set custom HTTP response headers
 - Terminal backend **can** set all security headers
 - CSP strategy differs for each:
-  - Frontend: static QA validation + meta tag documentation
+  - Frontend: static QA and runtime origin validation
   - Backend: HTTP response header enforcement
 
 ---
@@ -110,7 +114,7 @@ Explicitly documents:
 **Updated to include:**
 - ✅ `https://unpkg.com` (Boxicons) - was missing
 - ✅ `https://cloud.umami.is` (Analytics) - was missing
-- ✅ Removed obsolete entries (chatbase.co, youtube.com, cdnjs.cloudflare.com)
+- ✅ Reconciled the allowlist with the origin inventory, including runtime and outbound origins
 - ✅ Added documentation note pointing to `docs/ORIGINS.md`
 
 #### 5c. Smoke Tests with Origin Validation
@@ -178,7 +182,7 @@ Tests verify:
 ### 8. ✅ Security Enhancements
 
 #### Origin Validation
-- Terminal backend enforces `ALLOWED_ORIGINS` environment variable on every request
+- Terminal backend validates supplied `Origin` headers against the `ALLOWED_ORIGINS` environment variable
 - WebSocket upgrade validates `Origin` header before upgrade
 - CORS middleware returns 403 Forbidden for unapproved origins in production
 
@@ -198,9 +202,9 @@ Tests verify:
 
 | Criterion | Status | Evidence |
 |-----------|--------|----------|
-| A reviewed source of truth lists all approved external origins | ✅ | [`docs/ORIGINS.md`](docs/ORIGINS.md) - 5 origin groups, all documented |
+| A reviewed source of truth lists all approved external origins | ✅ | [`docs/ORIGINS.md`](docs/ORIGINS.md) - 6 origin groups, all documented |
 | A new external origin fails CI unless explicitly added with a reason | ✅ | [`scripts/qa-static.js`](scripts/qa-static.js) gates new origins; `qa-allowlist.json` is source of truth |
-| Report-only policy produces no unexpected violations in browser smoke path | ✅ | [`tests/smoke.spec.js`](tests/smoke.spec.js) - new CSP test suite validates no unapproved origins loaded |
+| Runtime origin checks produce no unexpected external requests in browser smoke path | ✅ | [`tests/smoke.spec.js`](tests/smoke.spec.js) - origin suite validates no unapproved origins loaded |
 | Deployment documentation distinguishes static frontend from terminal API | ✅ | [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) - separate sections with clear differences |
 | No credentials or learner content is sent to unapproved third party | ✅ | [`Javascript/analytics.js`](Javascript/analytics.js#L42) - PII-blocking schema; smoke test validates no credential leakage |
 
@@ -216,8 +220,8 @@ Tests verify:
 
 ### Modified Files
 1. [`scripts/qa-allowlist.json`](scripts/qa-allowlist.json)
-   - Added: `https://unpkg.com`, `https://cloud.umami.is`
-   - Removed: obsolete entries (chatbase.co, youtube.com, cdnjs.cloudflare.com)
+   - Added runtime and outbound origins required by the live site
+   - Reconciled the allowlist with the origin inventory
    - Added: documentation note
 
 2. [`scripts/qa-static.js`](scripts/qa-static.js)
@@ -300,10 +304,11 @@ Tests verify:
 - ✅ CORS origin validation enforced
 - ✅ WebSocket upgrade checks origin before upgrade
 
-### Monitoring (Production)
+### Monitoring (When Deployed)
 - ✅ Backend logs CSP violations with structured format
 - ✅ Violations include timestamp, origin, blocked resource, directive
-- ✅ Unapproved origins marked as `critical` severity for alerting
+- ✅ Unapproved origins marked as `critical` severity
+- ⏳ Production alerting still requires an operator/logging integration
 
 ---
 
@@ -326,5 +331,5 @@ Tests verify:
 
 ---
 
-**Approval Status:** Ready for Review  
+**Approval Status:** Ready for Review
 **Next Step:** Submit for security review and merge to main

@@ -73,7 +73,7 @@ This document provides a checklist for security reviews and incident response re
 
 - [ ] **CORS validation enabled**
   - [ ] `ALLOWED_ORIGINS` environment variable set
-  - [ ] Middleware checks origin on every request
+  - [ ] Middleware checks supplied browser `Origin` headers on every request
   - [ ] WebSocket upgrade validates origin before upgrade
 
 - [ ] **CSP report endpoint configured**
@@ -223,7 +223,7 @@ When a developer submits a PR to add a new external origin (new CDN, analytics, 
    ```bash
    # Check backend logs for recent violations
    docker logs terminal-backend | grep "CSP Violation"
-   
+
    # Identify which HTML or JS file is loading the resource
    grep -r "unexpected-cdn.com" HTML/ Javascript/
    ```
@@ -418,5 +418,5 @@ When a developer submits a PR to add a new external origin (new CDN, analytics, 
 
 ---
 
-**Last Updated:** 2026-08-16  
+**Last Updated:** 2026-08-16
 **Maintained By:** CyberMinds Security Team

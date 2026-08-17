@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"net/url"
+	"strconv"
+	"strings"
 	"time"
 )
 
@@ -77,15 +80,15 @@ func logCSPViolation(csp *CSPReport) {
 	buf.WriteString(severity)
 	buf.WriteString(" | CSP Violation")
 	buf.WriteString(" | directive=")
-	buf.WriteString(csp.EffectiveDirective)
+	buf.WriteString(strconv.Quote(csp.EffectiveDirective))
 	buf.WriteString(" blocked-uri=")
-	buf.WriteString(csp.BlockedURI)
+	buf.WriteString(strconv.Quote(csp.BlockedURI))
 	buf.WriteString(" document-uri=")
-	buf.WriteString(csp.DocumentURI)
+	buf.WriteString(strconv.Quote(csp.DocumentURI))
 
 	if csp.SourceFile != "" {
 		buf.WriteString(" source-file=")
-		buf.WriteString(csp.SourceFile)
+		buf.WriteString(strconv.Quote(csp.SourceFile))
 		buf.WriteString(":")
 		buf.WriteString(jsonInt(csp.LineNumber))
 	}
@@ -100,19 +103,31 @@ func isUnapprovedOrigin(blockedURI string) bool {
 	// Approved fonts: Google Fonts
 	// Approved icons: FontAwesome, Boxicons, Simmer.io embed
 	// All other origins are considered unapproved.
+	parsed, err := url.Parse(strings.TrimSpace(blockedURI))
+	if err != nil || parsed.Scheme == "" || parsed.Host == "" {
+		return false
+	}
+
+	parsedOrigin := strings.ToLower(parsed.Scheme + "://" + parsed.Host)
 
 	approvedOrigins := []string{
 		"https://cdn.jsdelivr.net",
 		"https://fonts.googleapis.com",
 		"https://fonts.gstatic.com",
 		"https://kit.fontawesome.com",
+		"https://ka-f.fontawesome.com",
 		"https://unpkg.com",
 		"https://i.simmer.io",
 		"https://cloud.umami.is",
+		"https://www.chatbase.co",
+		"https://www.youtube.com",
+		"https://cyberminds-terminal-20260621-ncus.northcentralus.cloudapp.azure.com",
 	}
 
-	for _, origin := range approvedOrigins {
-		if len(blockedURI) >= len(origin) && blockedURI[:len(origin)] == origin {
+	for _, approvedOrigin := range approvedOrigins {
+		// Keep the comparison exact; a trusted prefix must not trust an
+		// attacker-controlled host such as cdn.jsdelivr.net.evil.example.
+		if parsedOrigin == approvedOrigin {
 			return false
 		}
 	}
@@ -122,6 +137,5 @@ func isUnapprovedOrigin(blockedURI string) bool {
 }
 
 func jsonInt(i int) string {
-	b, _ := json.Marshal(i)
-	return string(b)
+	return strconv.Itoa(i)
 }

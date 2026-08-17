@@ -35,17 +35,17 @@ GitHub Pages (STATIC FRONTEND)
 - **Technology:** GitHub Pages (Jekyll, static site hosting)
 
 ### What We CAN Control
-✅ HTML file contents (meta tags, element attributes)  
-✅ CSS stylesheets (file contents, inline styles)  
-✅ JavaScript file contents (code, logic)  
-✅ Image files (filenames, alt text)  
-✅ Font files (served from CDN or included)  
+✅ HTML file contents (meta tags, element attributes)
+✅ CSS stylesheets (file contents, inline styles)
+✅ JavaScript file contents (code, logic)
+✅ Image files (filenames, alt text)
+✅ Font files (served from CDN or included)
 
 ### What We CANNOT Control
-❌ HTTP response headers (no `Content-Security-Policy`, `X-Frame-Options`, etc.)  
-❌ CORS headers  
-❌ Cache-Control headers  
-❌ Custom server-side logic  
+❌ HTTP response headers (no `Content-Security-Policy`, `X-Frame-Options`, etc.)
+❌ CORS headers
+❌ Cache-Control headers
+❌ Custom server-side logic
 
 **Reason:** GitHub Pages uses a fixed, non-customizable HTTP response header configuration managed by GitHub. You cannot override or add headers via repository settings or configuration files.
 
@@ -53,23 +53,16 @@ GitHub Pages (STATIC FRONTEND)
 
 ### CSP Strategy for GitHub Pages
 
-#### Option 1: Meta Tag (Current)
+#### Reference Policy (Not Deployed)
 
 ```html
-<meta http-equiv="Content-Security-Policy-Report-Only" 
+<meta http-equiv="Content-Security-Policy-Report-Only"
       content="default-src 'self'; script-src 'self' https://approved-origins.com; ...">
 ```
 
-**Pros:**
-- Serves as documentation of intended CSP policy
-- Some browsers honor meta tag CSP (varies by browser)
+This snippet documents a future header-capable frontend host. The repository does not ship this CSP as an HTML meta tag because GitHub Pages cannot provide a reliable browser-enforced policy.
 
-**Cons:**
-- Not enforced by all browsers or user agents
-- Not validated by automated tools (requires custom QA)
-- Learners using older browsers or certain extensions may not benefit
-
-#### Option 2: Static QA + Origin Validation (Current)
+#### Current: Static QA + Runtime Origin Validation
 
 File: [`scripts/qa-static.js`](../scripts/qa-static.js)
 
@@ -113,11 +106,11 @@ GitHub Pages does not allow custom HTTP response headers because:
 - **Technology:** Docker Compose + Caddy reverse proxy
 
 ### What We CAN Control
-✅ HTTP response headers (Content-Security-Policy, CORS, X-Frame-Options, etc.)  
-✅ WebSocket upgrade validation  
-✅ CORS origin allowlist  
-✅ Request/response middleware  
-✅ Logging and CSP violation reporting  
+✅ HTTP response headers (Content-Security-Policy, CORS, X-Frame-Options, etc.)
+✅ WebSocket upgrade validation
+✅ CORS origin allowlist
+✅ Request/response middleware
+✅ Logging and CSP violation reporting
 
 ### HTTP Response Headers Set by Backend
 
@@ -145,7 +138,7 @@ Access-Control-Max-Age: 3600
 Vary: Origin
 ```
 
-**Validation:** Every request is checked against `ALLOWED_ORIGINS` environment variable (see [`terminal/.env.example`](../terminal/.env.example#L9)).
+**Validation:** Requests that include an `Origin` header are checked against `ALLOWED_ORIGINS` (see [`terminal/.env.example`](../terminal/.env.example#L9)). This is a browser-origin boundary, not user authentication; originless non-browser clients are intentionally allowed.
 
 **Origin Check Logic:**
 1. Extract `Origin` header from request
@@ -218,7 +211,7 @@ WebSocket connections bypass normal HTTP header responses (no CSP header set) bu
 - ✅ Receive learner code submissions via REST/WebSocket
 - ✅ Execute code in isolated Docker containers
 - ✅ Stream terminal I/O back to browser
-- ✅ Validate origin of every request (CORS + WebSocket)
+- ✅ Validate supplied browser origins (CORS + WebSocket)
 - ✅ Log security violations (CSP reports)
 - ✅ Manage learner progress/challenge state in memory (no persistence)
 
@@ -280,9 +273,9 @@ GitHub Pages cannot be emulated locally with custom headers. Instead:
    npm run qa:static
    ```
 
-2. **Inspect HTML for CSP meta tag:**
+2. **Run the frontend origin checks:**
    ```bash
-   grep -r "Content-Security-Policy" HTML/*.html
+   npm run qa:static
    ```
 
 ### Terminal Backend (Docker)
@@ -342,19 +335,19 @@ GitHub Pages cannot be emulated locally with custom headers. Instead:
 
 ## FAQ
 
-**Q: Can GitHub Pages set CSP headers?**  
-A: No. GitHub Pages uses GitHub-managed infrastructure and does not support custom response headers. You must use static validation (QA script) and meta tags for documentation.
+**Q: Can GitHub Pages set CSP headers?**
+A: No. GitHub Pages uses GitHub-managed infrastructure and does not support custom response headers. The current deployment uses static QA and Playwright runtime origin checks.
 
-**Q: How does the terminal frontend connect to the backend without CORS errors?**  
+**Q: How does the terminal frontend connect to the backend without CORS errors?**
 A: The terminal backend's CORS middleware echoes back the `Access-Control-Allow-Origin` header if the origin matches the allowlist. The browser checks this header and allows the fetch/WebSocket.
 
-**Q: What happens if the terminal backend is down?**  
+**Q: What happens if the terminal backend is down?**
 A: The frontend page loads fine (served by GitHub Pages). When the learner tries to run code or access the terminal, the browser shows an error connecting to the backend. See [`Javascript/terminal/app/runtime.js`](../Javascript/terminal/app/runtime.js) for the error handling logic.
 
-**Q: Can the frontend send learner data to unapproved third parties?**  
-A: Not through a successful HTTP request. The CSP policy and CORS would block it. The only way to bypass CSP is with script injection (XSS), which would require an attacker to compromise GitHub Pages or inject malicious code into an approved CDN.
+**Q: Can the frontend send learner data to unapproved third parties?**
+A: The static allowlist and runtime smoke checks prevent reviewed site code from adding an unapproved origin. CORS protects terminal API responses, not arbitrary browser requests, and is not authentication; analytics code separately strips blocked sensitive fields.
 
-**Q: How do I add a new external origin?**  
+**Q: How do I add a new external origin?**
 A: See [`docs/ORIGINS.md#appendix-how-to-add-a-new-external-origin`](ORIGINS.md#appendix-how-to-add-a-new-external-origin) for the full checklist.
 
 ---

@@ -2,12 +2,12 @@
 
 ## Executive Summary
 
-I have successfully implemented a comprehensive trust boundary validation system for CyberMinds that makes the security boundary between the public frontend, third-party resources, and the terminal service **explicit, documented, and continuously checked**. 
+I have successfully implemented a comprehensive trust boundary validation system for CyberMinds that makes the security boundary between the public frontend, third-party resources, and the terminal service **explicit, documented, and continuously checked**.
 
-All acceptance criteria have been met:
+Repository implementation and local validation are complete; production deployment verification remains operational follow-up:
 - ✅ **Reviewed source of truth** for all approved external origins
 - ✅ **CI gating** that fails new unapproved origins
-- ✅ **Report-only CSP** with no unexpected violations in smoke tests
+- ✅ **Static and runtime origin validation** with no unexpected origins in smoke tests
 - ✅ **Clear deployment documentation** distinguishing GitHub Pages from terminal API
 - ✅ **Zero credential leakage** to unapproved third parties
 
@@ -55,10 +55,10 @@ Explicitly addresses the requirement about GitHub Pages limitations:
 #### GitHub Pages Cannot Set HTTP Response Headers
 - Clearly documented why GitHub Pages doesn't support custom headers
 - Explains workaround: static QA validation gates deployments
-- CSP declared as meta tag for documentation purposes
+- Frontend origin policy is validated by static QA and Playwright; no CSP meta tag is shipped
 
 #### Terminal Backend Can Set All Headers
-- CORS origin validation enforced on every request
+- CORS origin validation enforced when a request supplies an `Origin` header
 - WebSocket origin check before upgrade
 - CSP report-only header applied to non-WebSocket requests
 - CSP report endpoint at `/api/csp-report`
@@ -87,7 +87,7 @@ To approve this origin:
 
 - ✅ Added: `https://unpkg.com` (Boxicons)
 - ✅ Added: `https://cloud.umami.is` (Analytics)
-- ✅ Removed: Obsolete entries (chatbase.co, youtube.com, cdnjs.cloudflare.com)
+- ✅ Reconciled the allowlist with live static and runtime origins, including Chatbase, YouTube, and the FontAwesome runtime host
 - ✅ Added: Documentation note pointing to ORIGINS.md
 
 #### 4c. New Security-Focused Smoke Tests
@@ -175,9 +175,9 @@ Complete overview including:
 
 | Criterion | Status | Evidence |
 |-----------|--------|----------|
-| A reviewed source of truth lists all approved external origins and their purpose | ✅ | [`docs/ORIGINS.md`](docs/ORIGINS.md) - Complete table with 5 origin groups |
+| A reviewed source of truth lists all approved external origins and their purpose | ✅ | [`docs/ORIGINS.md`](docs/ORIGINS.md) - Complete table with 6 origin groups |
 | A new external origin fails CI or review unless explicitly added with a reason | ✅ | [`scripts/qa-static.js`](scripts/qa-static.js) gates new origins; enhanced error messages direct to approval process |
-| Report-only policy produces no unexpected violations in the browser smoke path | ✅ | [`tests/smoke.spec.js`](tests/smoke.spec.js) - New CSP test suite validates no unapproved origins loaded |
+| Runtime origin checks produce no unexpected external requests in the browser smoke path | ✅ | [`tests/smoke.spec.js`](tests/smoke.spec.js) - Origin suite validates no unapproved origins loaded |
 | Deployment documentation distinguishes static frontend from terminal API and does not claim headers where host cannot set them | ✅ | [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) - Explicit section on GitHub Pages limitations + what terminal backend can do |
 | No credentials or learner content is sent to unapproved third party | ✅ | Analytics validated in [`Javascript/analytics.js`](Javascript/analytics.js#L42); smoke test checks for credential leakage |
 
@@ -185,7 +185,7 @@ Complete overview including:
 
 ## Key Implementation Details
 
-### Origin Inventory (5 Groups)
+### Origin Inventory (6 Groups)
 
 **Group 1: Styling & Fonts**
 - Google Fonts (googleapis.com, gstatic.com)
@@ -200,20 +200,24 @@ Complete overview including:
 
 **Group 4: Embeds**
 - Simmer.io game (Course 3 only)
+- Chatbase Live Help and YouTube course videos
 
-**Group 5: Backend**
+**Group 5: Learning Resource Links**
+- Duplichecker, Kali Linux, Parrot OS, and VirtualBox outbound references
+
+**Group 6: Backend**
 - Terminal API (WebSocket + REST)
 
 ### CSP Policy
 
-**GitHub Pages (Report-Only):**
+**GitHub Pages (Reference Policy; not deployed):**
 ```
 default-src 'self';
-script-src 'self' https://kit.fontawesome.com https://cdn.jsdelivr.net https://cloud.umami.is;
-style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://kit.fontawesome.com https://unpkg.com https://cdn.jsdelivr.net;
+script-src 'self' https://kit.fontawesome.com https://ka-f.fontawesome.com https://cdn.jsdelivr.net https://cloud.umami.is https://www.chatbase.co;
+style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://kit.fontawesome.com https://ka-f.fontawesome.com https://unpkg.com https://cdn.jsdelivr.net;
 font-src 'self' https://fonts.gstatic.com;
 img-src 'self' data: https:;
-frame-src https://i.simmer.io;
+frame-src https://i.simmer.io https://www.chatbase.co https://www.youtube.com;
 connect-src 'self' https://cyberminds-terminal-*.northcentralus.cloudapp.azure.com https://cloud.umami.is;
 ```
 
@@ -335,11 +339,11 @@ npm run qa:static
 
 ## Next Steps
 
-1. ✅ **Review:** Security team reviews ORIGINS.md and DEPLOYMENT.md
-2. ✅ **Approval:** Maintainers approve and merge
-3. ✅ **Deploy:** Frontend deploys automatically to GitHub Pages
-4. ✅ **Deploy:** Terminal backend deployed to Azure with new CSP report handler
-5. ✅ **Monitor:** Watch logs for CSP violations in production
+1. ✅ **Review:** Repository checks and origin inventory are ready for review
+2. ⏳ **Approval:** Maintainers approve and merge
+3. ⏳ **Deploy:** Frontend deploys automatically to GitHub Pages after merge
+4. ⏳ **Deploy:** Re-enable and verify the Azure terminal VM, then deploy the backend
+5. ⏳ **Monitor:** Configure and watch CSP logs after production recovery
 6. ✅ **Iterate:** Update ORIGINS.md when new origins are added
 
 ---
