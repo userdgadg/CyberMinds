@@ -1,0 +1,20 @@
+name: CTF Integration
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ctf-challenge-scripts:
+    name: Challenge Script Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Pull test image
+        run: docker pull python:3.11-slim
+      - name: Run challenge tests
+        run: bash scripts/ctf-challenge-tests.sh

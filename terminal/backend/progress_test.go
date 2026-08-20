@@ -159,6 +159,55 @@ func TestHandleCompleteChallengeAndAccessFlow(t *testing.T) {
 	})
 }
 
+func TestSkipRejectionForAllChallenges(t *testing.T) {
+	resetProgressAndSessionsForTest()
+	addTestSession("skip-test")
+
+	for i, id := range challengeOrder {
+		if i == 0 {
+			continue
+		}
+		t.Run("cannot_skip_to_"+id, func(t *testing.T) {
+			req := httptest.NewRequest(http.MethodPost, "/api/session/skip-test/progress/"+id, nil)
+			req = mux.SetURLVars(req, map[string]string{"sessionId": "skip-test", "challengeId": id})
+			rr := httptest.NewRecorder()
+			handleCompleteChallenge(rr, req)
+			if rr.Code != http.StatusForbidden {
+				t.Fatalf("%s: expected 403 when prerequisites not done, got %d", id, rr.Code)
+			}
+		})
+	}
+}
+
+func TestSessionDeleteClearsProgress(t *testing.T) {
+	resetProgressAndSessionsForTest()
+	addTestSession("del-test")
+
+	req := httptest.NewRequest(http.MethodPost, "/api/session/del-test/progress/linux-basics", nil)
+	req = mux.SetURLVars(req, map[string]string{"sessionId": "del-test", "challengeId": "linux-basics"})
+	rr := httptest.NewRecorder()
+	handleCompleteChallenge(rr, req)
+	if rr.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d", rr.Code)
+	}
+
+	mu.Lock()
+	delete(sessions, "del-test")
+	mu.Unlock()
+
+	progressStoreMu.Lock()
+	delete(progressStore, "del-test")
+	progressStoreMu.Unlock()
+
+	req2 := httptest.NewRequest(http.MethodGet, "/api/session/del-test/progress", nil)
+	req2 = mux.SetURLVars(req2, map[string]string{"sessionId": "del-test"})
+	rr2 := httptest.NewRecorder()
+	handleGetProgress(rr2, req2)
+	if rr2.Code != http.StatusNotFound {
+		t.Fatalf("expected 404 after session deletion, got %d", rr2.Code)
+	}
+}
+
 func TestProgressHandlersErrorPaths(t *testing.T) {
 	resetProgressAndSessionsForTest()
 
