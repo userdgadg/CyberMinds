@@ -1,0 +1,43 @@
+# Full-corpus scan for broken local links / missing learner assets across
+# every course, CTF, lab, and landing page -- not just files touched by a
+# pull request. Runs on a schedule so renamed/removed assets that break an
+# *unchanged* page still get caught, and publishes a report as a CI artifact.
+#
+# This workflow intentionally is not a required PR status check -- see
+# qa-static.yml for the PR-time, changed-files-only check. This one is the
+# safety net for cross-file drift the PR check structurally cannot see.
+
+name: Scheduled Link and Asset Audit
+
+on:
+  schedule:
+    # Every Monday 06:00 UTC.
+    - cron: '0 6 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  full-link-audit:
+    name: Full-corpus link and asset audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run full-corpus link and asset audit
+        run: node scripts/link-audit.js
+
+      - name: Upload link audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: link-audit-report
+          path: reports/link-audit.*
+          retention-days: 30
