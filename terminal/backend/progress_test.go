@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 	"time"
 
+	"github.com/docker/docker/client"
 	"github.com/gorilla/mux"
 )
 
@@ -183,6 +185,15 @@ func TestSessionDeleteClearsProgress(t *testing.T) {
 	resetProgressAndSessionsForTest()
 	addTestSession("del-test")
 
+	originalStop := stopContainerFn
+	originalRemove := removeContainerFn
+	defer func() {
+		stopContainerFn = originalStop
+		removeContainerFn = originalRemove
+	}()
+	stopContainerFn = func(context.Context, *client.Client, string, int) error { return nil }
+	removeContainerFn = func(context.Context, *client.Client, string, bool) error { return nil }
+
 	req := httptest.NewRequest(http.MethodPost, "/api/session/del-test/progress/linux-basics", nil)
 	req = mux.SetURLVars(req, map[string]string{"sessionId": "del-test", "challengeId": "linux-basics"})
 	rr := httptest.NewRecorder()
@@ -191,13 +202,13 @@ func TestSessionDeleteClearsProgress(t *testing.T) {
 		t.Fatalf("expected 200, got %d", rr.Code)
 	}
 
-	mu.Lock()
-	delete(sessions, "del-test")
-	mu.Unlock()
-
-	progressStoreMu.Lock()
-	delete(progressStore, "del-test")
-	progressStoreMu.Unlock()
+	deleteReq := httptest.NewRequest(http.MethodDelete, "/api/session/del-test", nil)
+	deleteReq = mux.SetURLVars(deleteReq, map[string]string{"sessionId": "del-test"})
+	deleteRR := httptest.NewRecorder()
+	deleteSession(deleteRR, deleteReq)
+	if deleteRR.Code != http.StatusOK {
+		t.Fatalf("expected 200 deleting session, got %d", deleteRR.Code)
+	}
 
 	req2 := httptest.NewRequest(http.MethodGet, "/api/session/del-test/progress", nil)
 	req2 = mux.SetURLVars(req2, map[string]string{"sessionId": "del-test"})
@@ -205,6 +216,13 @@ func TestSessionDeleteClearsProgress(t *testing.T) {
 	handleGetProgress(rr2, req2)
 	if rr2.Code != http.StatusNotFound {
 		t.Fatalf("expected 404 after session deletion, got %d", rr2.Code)
+	}
+
+	progressStoreMu.RLock()
+	_, progressExists := progressStore["del-test"]
+	progressStoreMu.RUnlock()
+	if progressExists {
+		t.Fatal("expected session progress to be removed with the session")
 	}
 }
 
