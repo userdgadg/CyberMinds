@@ -139,9 +139,9 @@ RUN printf '%s\n' \
     '    print("FAIL: priv-esc-report.txt is empty")' \
     '    sys.exit(1)' \
     'checks = [' \
-    '    (r"\\bjsmith\\b", "must mention user jsmith"),' \
+    '    (r"\bjsmith\b", "must mention user jsmith"),' \
     '    (r"02:11", "must include timestamp 02:11"),' \
-    '    (r"\\bsu\\b|escalat", "must reference su/escalation"),' \
+    '    (r"\bsu\b|escalat", "must reference su/escalation"),' \
     ']' \
     'for pattern, msg in checks:' \
     '    if not re.search(pattern, content, re.IGNORECASE):' \

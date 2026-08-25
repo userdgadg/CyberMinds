@@ -197,10 +197,12 @@ func TestCreateSessionContainerFailures(t *testing.T) {
 
 func TestCleanupSessionWithInjectedDockerOps(t *testing.T) {
 	originalSessions := sessions
+	originalProgress := progressStore
 	originalStop := stopContainerFn
 	originalRemove := removeContainerFn
 	defer func() {
 		sessions = originalSessions
+		progressStore = originalProgress
 		stopContainerFn = originalStop
 		removeContainerFn = originalRemove
 	}()
@@ -211,6 +213,9 @@ func TestCleanupSessionWithInjectedDockerOps(t *testing.T) {
 			ContainerID: "container-clean",
 			CreatedAt:   time.Now(),
 		},
+	}
+	progressStore = map[string]*ChallengeProgress{
+		"s-clean": {CompletedChallenges: map[string]CompletionRecord{"linux-basics": {Passed: true}}},
 	}
 
 	stopped := false
@@ -231,5 +236,8 @@ func TestCleanupSessionWithInjectedDockerOps(t *testing.T) {
 	}
 	if _, ok := sessions["s-clean"]; ok {
 		t.Fatal("expected session to be removed from in-memory store")
+	}
+	if _, ok := progressStore["s-clean"]; ok {
+		t.Fatal("expected progress to be removed with the session")
 	}
 }

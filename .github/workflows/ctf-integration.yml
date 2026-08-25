@@ -1,0 +1,26 @@
+name: CTF Integration
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  ctf-challenge-scripts:
+    name: Challenge Script Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Build production terminal test image
+        run: docker build --tag cyberminds-terminal-ctf:test --file terminal/Dockerfile.terminal terminal
+      - name: Run challenge tests
+        env:
+          CTF_TEST_IMAGE: cyberminds-terminal-ctf:test
+        run: bash scripts/ctf-challenge-tests.sh

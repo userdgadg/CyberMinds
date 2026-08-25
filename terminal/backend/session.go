@@ -198,6 +198,13 @@ func getSession(sessionID string) (*Session, bool) {
 	return session, ok
 }
 
+func shortContainerID(containerID string) string {
+	if len(containerID) <= 12 {
+		return containerID
+	}
+	return containerID[:12]
+}
+
 func deleteSession(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	sessionID := vars["sessionId"]
@@ -230,6 +237,10 @@ func cleanupSession(sessionID string) {
 	delete(sessions, sessionID)
 	mu.Unlock()
 
+	progressStoreMu.Lock()
+	delete(progressStore, sessionID)
+	progressStoreMu.Unlock()
+
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
@@ -241,13 +252,13 @@ func cleanupSession(sessionID string) {
 	defer cli.Close()
 
 	if err := stopContainerFn(ctx, cli, session.ContainerID, 10); err != nil {
-		log.Printf("Failed to stop container %s: %v", session.ContainerID[:12], err)
+		log.Printf("Failed to stop container %s: %v", shortContainerID(session.ContainerID), err)
 	}
 
 	if err := removeContainerFn(ctx, cli, session.ContainerID, true); err != nil {
-		log.Printf("Failed to remove container %s: %v", session.ContainerID[:12], err)
+		log.Printf("Failed to remove container %s: %v", shortContainerID(session.ContainerID), err)
 		return
 	}
 
-	log.Printf("Cleaned up session %s (container %s)", sessionID, session.ContainerID[:12])
+	log.Printf("Cleaned up session %s (container %s)", sessionID, shortContainerID(session.ContainerID))
 }
