@@ -46,3 +46,8 @@ jobs:
         env:
           QA_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: npm run qa:static -- --changed-from "$QA_BASE"
+
+      - name: Check changed links and assets
+        env:
+          QA_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: npm run qa:links -- --changed-from "$QA_BASE"

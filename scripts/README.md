@@ -19,6 +19,8 @@ node scripts/link-audit.js --write-baseline
 ```
 
 Reports are written to `reports/link-audit.json` and `reports/link-audit.txt`.
+Query strings are removed from report targets so accidental tokens in markup
+are not copied into CI artifacts.
 
 ## Finding classes
 
@@ -53,6 +55,10 @@ reproduces (`staleBaselineEntries`) as a reminder to clean it up.
 baseline is for pre-existing, owned, tracked debt — not a way to silence a
 new broken link you just introduced. If you introduce a new one, fix it or
 route it through the ignore directive below (with a real reason).
+
+On pull requests, the audit compares against the base branch's baseline and
+fails if the change adds a baseline entry. Baseline growth requires a separate
+reviewed change; it cannot silently suppress a new broken reference.
 
 ## Marking an intentional non-repo reference: `data-qa-ignore-link`
 

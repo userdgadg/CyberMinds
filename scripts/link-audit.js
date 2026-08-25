@@ -25,7 +25,6 @@ const changedFrom = option('--changed-from');
 const writeBaselineMode = hasFlag('--write-baseline');
 const mode = changedFrom ? 'changed' : 'full';
 
-
 const REF_ATTR_BY_TAG = {
   a: 'href',
   area: 'href',
@@ -173,7 +172,7 @@ function classifyReference({ absFile, relFile, line, tag, attrName, rawValue, ig
       line,
       tag,
       type: attrName,
-      target: value,
+      target: cleanReference(value),
       class: 'external',
     };
   }
@@ -237,10 +236,45 @@ function findingKey(finding) {
 
 function loadBaseline() {
   if (!fs.existsSync(baselinePath)) {
-    return { generatedAt: null, entries: [] };
+    return emptyBaseline();
   }
-  const raw = JSON.parse(fs.readFileSync(baselinePath, 'utf8'));
-  return { generatedAt: raw.generatedAt || null, entries: raw.entries || [] };
+  return parseBaseline(fs.readFileSync(baselinePath, 'utf8'));
+}
+
+function emptyBaseline() {
+  return { generatedAt: null, entries: [] };
+}
+
+function parseBaseline(raw) {
+  const parsed = JSON.parse(raw);
+  return {
+    generatedAt: parsed.generatedAt || null,
+    entries: Array.isArray(parsed.entries) ? parsed.entries : [],
+  };
+}
+
+function loadBaselineAtRef(ref) {
+  const baselineFile = path.relative(repoRoot, baselinePath).split(path.sep).join('/');
+  try {
+    const raw = execFileSync('git', ['show', `${ref}:${baselineFile}`], {
+      cwd: repoRoot,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'ignore'],
+    });
+    return { ...parseBaseline(raw), exists: true };
+  } catch {
+    return { ...emptyBaseline(), exists: false };
+  }
+}
+
+function isValidBaselineEntry(entry) {
+  if (!entry || typeof entry !== 'object') return false;
+  if (typeof entry.file !== 'string' || typeof entry.type !== 'string') return false;
+  if (typeof entry.target !== 'string') return false;
+  if (typeof entry.owner !== 'string' || !entry.owner.trim()) return false;
+  if (entry.owner.trim().toUpperCase() === 'TODO') return false;
+  if (typeof entry.note !== 'string' || !entry.note.trim()) return false;
+  return !/^auto-generated\b/i.test(entry.note.trim());
 }
 
 function writeBaseline(entries) {
@@ -315,7 +349,24 @@ function main() {
   }
 
   const baseline = loadBaseline();
-  const baselineKeys = new Set(baseline.entries.map((e) => findingKey(e)));
+  const baseBaseline = changedFrom ? loadBaselineAtRef(changedFrom) : null;
+  const baselineForGate = baseBaseline || baseline;
+  const baselineKeys = new Set(baselineForGate.entries.map((e) => findingKey(e)));
+  const baseBaselineKeys = new Set(
+    (baseBaseline ? baseBaseline.entries : baseline.entries).map((e) => findingKey(e))
+  );
+  const addedBaselineEntries = changedFrom
+    ? baseBaseline.exists
+      ? baseline.entries.filter((entry) => !baseBaselineKeys.has(findingKey(entry)))
+      : []
+    : [];
+  const invalidBaselineEntries = baseline.entries.filter(
+    (entry) => !isValidBaselineEntry(entry)
+  );
+  const externalFindings = allFindings.filter((f) => f.class === 'external');
+  const runtimeGeneratedFindings = allFindings.filter(
+    (f) => f.class === 'runtime-generated'
+  );
 
   const newBroken = brokenFindings.filter((f) => !baselineKeys.has(findingKey(f)));
   const knownBroken = brokenFindings.filter((f) => baselineKeys.has(findingKey(f)));
@@ -323,10 +374,7 @@ function main() {
   let staleBaseline = [];
   if (mode === 'full') {
     const currentBrokenKeys = new Set(brokenFindings.map((f) => findingKey(f)));
-    const scannedFiles = new Set(files.map((f) => relative(f)));
-    staleBaseline = baseline.entries.filter(
-      (e) => scannedFiles.has(e.file) && !currentBrokenKeys.has(findingKey(e))
-    );
+    staleBaseline = baseline.entries.filter((e) => !currentBrokenKeys.has(findingKey(e)));
   }
 
   // ── reports ──
@@ -338,12 +386,20 @@ function main() {
       newBroken: newBroken.length,
       knownBroken: knownBroken.length,
       invalidIgnoreDirectives: invalidIgnoreFindings.length,
+      baselineEntriesAdded: addedBaselineEntries.length,
+      invalidBaselineEntries: invalidBaselineEntries.length,
+      external: externalFindings.length,
+      runtimeGenerated: runtimeGeneratedFindings.length,
       ignored: ignoredFindings.length,
       staleBaselineEntries: staleBaseline.length,
     },
     newBroken,
     knownBroken,
     invalidIgnoreDirectives: invalidIgnoreFindings,
+    baselineEntriesAdded: addedBaselineEntries,
+    invalidBaselineEntries,
+    external: externalFindings,
+    runtimeGenerated: runtimeGeneratedFindings,
     ignored: ignoredFindings,
     staleBaselineEntries: staleBaseline,
   };
@@ -351,6 +407,22 @@ function main() {
   const lines = [];
   lines.push(`Link/asset audit (${mode}) - ${files.length} file(s) scanned`);
   lines.push('');
+
+  if (addedBaselineEntries.length) {
+    lines.push(`Baseline entries added in this change (not allowed): ${addedBaselineEntries.length}`);
+    for (const e of addedBaselineEntries) {
+      lines.push(`  ${e.file} [${e.type}] "${e.target}"`);
+    }
+    lines.push('');
+  }
+
+  if (invalidBaselineEntries.length) {
+    lines.push(`Invalid baseline entries (owner/note required): ${invalidBaselineEntries.length}`);
+    for (const e of invalidBaselineEntries) {
+      lines.push(`  ${e.file || '<missing file>'} [${e.type || '<missing type>'}] "${e.target || ''}"`);
+    }
+    lines.push('');
+  }
 
   if (newBroken.length) {
     lines.push(`NEW broken local reference(s): ${newBroken.length}`);
@@ -407,7 +479,12 @@ function main() {
 
   console.log(text);
 
-  if (newBroken.length || invalidIgnoreFindings.length) {
+  if (
+    newBroken.length ||
+    invalidIgnoreFindings.length ||
+    addedBaselineEntries.length ||
+    invalidBaselineEntries.length
+  ) {
     process.exitCode = 1;
   }
 }
