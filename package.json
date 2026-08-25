@@ -1,13 +1,15 @@
 {
   "scripts": {
     "qa:static": "node scripts/qa-static.js --changed-from main",
-    "test:qa": "node --test scripts/qa-static.test.js",
+    "test:qa": "node --test scripts/qa-static.test.js scripts/link-audit.test.js",
     "lint:frontend": "eslint --max-warnings=0 \"Javascript/*.js\" \"Javascript/terminal/**/*.js\" \"Javascript/*.mjs\"",
     "format": "npx prettier \"**/*.{html,css}\" --write",
     "format:check": "npx prettier \"**/*.{html,css}\" --check",
     "test:smoke": "playwright test",
     "test:smoke:headed": "playwright test --headed",
-    "test:smoke:ui": "playwright test --ui"
+    "test:smoke:ui": "playwright test --ui",
+    "qa:links": "node scripts/link-audit.js",
+    "qa:links:baseline": "node scripts/link-audit.js --write-baseline"
   },
   "dependencies": {
     "@codemirror/lang-python": "^6.2.1",

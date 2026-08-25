@@ -1,0 +1,118 @@
+{
+  "generatedAt": "2026-08-23T23:37:39.891Z",
+  "description": "Reviewed, owned baseline of known broken local links/assets. Entries here do not fail the quality gate. New findings not listed here DO fail the gate. Remove an entry once it is fixed; do not widen this file into a general suppression list.",
+  "entries": [
+    {
+      "file": "HTML/Courses and Activities/Course 10/NetworkingQuiz1course10.html",
+      "type": "href",
+      "target": "CloudEncryptionandDataProtection11.html",
+      "owner": "Aditya",
+      "note": "Pre-existing course navigation debt tracked in #185; remove when fixed.",
+      "line": 250
+    },
+    {
+      "file": "HTML/Courses and Activities/Course 10/NetworkingQuiz1course10.html",
+      "type": "href",
+      "target": "CloudIdentityandAccessManagement11.html",
+      "owner": "Aditya",
+      "note": "Pre-existing course navigation debt tracked in #185; remove when fixed.",
+      "line": 222
+    },
+    {
+      "file": "HTML/Courses and Activities/Course 10/NetworkingQuiz1course10.html",
+      "type": "href",
+      "target": "CloudIncidentResponse11.html",
+      "owner": "Aditya",
+      "note": "Pre-existing course navigation debt tracked in #185; remove when fixed.",
+      "line": 258
+    },
+    {
+      "file": "HTML/Courses and Activities/Course 10/NetworkingQuiz1course10.html",
+      "type": "href",
+      "target": "CommonCloudThreats11.html",
+      "owner": "Aditya",
+      "note": "Pre-existing course navigation debt tracked in #185; remove when fixed.",
+      "line": 230
+    },
+    {
+      "file": "HTML/Courses and Activities/Course 10/NetworkingQuiz1course10.html",
+      "type": "href",
+      "target": "CybersecurityCloudQuiz1Course11.html",
+      "owner": "Aditya",
+      "note": "Pre-existing course navigation debt tracked in #185; remove when fixed.",
+      "line": 238
+    },
+    {
+      "file": "HTML/Courses and Activities/Course 10/NetworkingQuiz1course10.html",
+      "type": "href",
+      "target": "CybersecurityCloudQuiz2Course11.html",
+      "owner": "Aditya",
+      "note": "Pre-existing course navigation debt tracked in #185; remove when fixed.",
+      "line": 266
+    },
+    {
+      "file": "HTML/Courses and Activities/Course 10/NetworkingQuiz1course10.html",
+      "type": "href",
+      "target": "Introductioncourse11.html",
+      "owner": "Aditya",
+      "note": "Pre-existing course navigation debt tracked in #185; remove when fixed.",
+      "line": 207
+    },
+    {
+      "file": "HTML/Courses and Activities/Course 10/NetworkingQuiz1course10.html",
+      "type": "href",
+      "target": "NetworkSecurityintheCloud.html",
+      "owner": "Aditya",
+      "note": "Pre-existing course navigation debt tracked in #185; remove when fixed.",
+      "line": 242
+    },
+    {
+      "file": "HTML/Courses and Activities/Course 10/NetworkingQuiz1course10.html",
+      "type": "href",
+      "target": "SharedResponsibilityModel11.html",
+      "owner": "Aditya",
+      "note": "Pre-existing CTF asset debt tracked in #185; remove when fixed.",
+      "line": 214
+    },
+    {
+      "file": "HTML/CTF/CTF1.html",
+      "type": "src",
+      "target": "../Javascript/footer.js",
+      "owner": "Aditya",
+      "note": "Pre-existing CTF asset debt tracked in #185; remove when fixed.",
+      "line": 77
+    },
+    {
+      "file": "HTML/CTF/CTF2.html",
+      "type": "src",
+      "target": "../Javascript/footer.js",
+      "owner": "Aditya",
+      "note": "Pre-existing CTF asset debt tracked in #185; remove when fixed.",
+      "line": 77
+    },
+    {
+      "file": "HTML/CTF/CTF3.html",
+      "type": "src",
+      "target": "../Javascript/footer.js",
+      "owner": "Aditya",
+      "note": "Pre-existing CTF asset debt tracked in #185; remove when fixed.",
+      "line": 77
+    },
+    {
+      "file": "HTML/CTF/CTF4.html",
+      "type": "src",
+      "target": "../Javascript/footer.js",
+      "owner": "Aditya",
+      "note": "Pre-existing CTF asset debt tracked in #185; remove when fixed.",
+      "line": 77
+    },
+    {
+      "file": "HTML/CTFs/ctfTemplate.html",
+      "type": "href",
+      "target": "../CSS/popup.css",
+      "owner": "Aditya",
+      "note": "Pre-existing CTF asset debt tracked in #185; remove when fixed.",
+      "line": 8
+    }
+  ]
+}
