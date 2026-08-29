@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -135,6 +136,10 @@ func TestHealthCheckDockerUnavailable(t *testing.T) {
 
 	if rr.Code != http.StatusServiceUnavailable {
 		t.Fatalf("expected 503, got %d", rr.Code)
+	}
+	body := rr.Body.String()
+	if strings.Contains(body, "docker") {
+		t.Fatalf("health response must not expose docker field; got: %s", body)
 	}
 }
 

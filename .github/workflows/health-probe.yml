@@ -1,0 +1,33 @@
+name: Health Probe
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+jobs:
+  probe:
+    name: Terminal Health Probe
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run health probe
+        env:
+          TERMINAL_HEALTH_URL: ${{ vars.TERMINAL_HEALTH_URL }}
+          PROBE_TIMEOUT: '10'
+          PROBE_WARN_LATENCY_MS: '3000'
+        run: |
+          bash scripts/probe-health.sh | tee probe-result.json
+          exit "${PIPESTATUS[0]}"
+
+      - name: Upload probe result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: probe-result-${{ github.run_id }}
+          path: probe-result.json
+          retention-days: 7
