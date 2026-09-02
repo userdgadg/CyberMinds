@@ -1,9 +1,16 @@
 # Runbook: Terminal Backend Outage
 
-**Owner:** Cyber-Minds org — backend on-call  
-**Alert threshold:** 2 consecutive probe failures (both returning `"status":"down"`)  
-**Probe cadence:** Every 15 minutes via `health-probe.yml`  
-**Health path:** `GET /health` → 200 (ok) or 503 (error)
+- **Owner:** Cyber-Minds backend on-call
+- **Alert threshold:** 2 consecutive probe failures (both returning `"status":"down"`)
+- **Probe cadence:** Every 15 minutes via `health-probe.yml`
+- **Health path:** `GET /health` → 200 (ok) or 503 (error)
+
+Before enabling the workflow, set the repository variable to the public health URL:
+
+```bash
+gh variable set TERMINAL_HEALTH_URL \
+  --body "https://cyberminds-terminal-20260621-ncus.northcentralus.cloudapp.azure.com/health"
+```
 
 ---
 
@@ -13,24 +20,24 @@ Run in order — stop when you find the layer that is broken.
 
 | # | Check | Pass signal |
 |---|-------|-------------|
-| 1 | Probe artifact in Actions → latest `probe-result-*` | `category` is not `connection_error` |
+| 1 | Probe artifact in Actions → latest `probe-result-*` | `status` is `ok` or `degraded` |
 | 2 | Azure VM reachable | `ssh <vm-user>@<vm-host>` succeeds |
 | 3 | Go backend process running | `systemctl is-active cyberminds-terminal` → `active` |
 | 4 | Docker daemon running | `systemctl is-active docker` → `active` |
 | 5 | Docker ping succeeds | `docker info` exits 0 |
-| 6 | Container image present | `docker images | grep terminal-backend` has a row |
+| 6 | Terminal base image present | `docker image inspect terminal-base:latest` exits 0 |
 
-Failure at step 1 → connection layer (DNS, firewall, Azure NSG rule).  
-Failure at step 2 → VM is down or SSH key revoked.  
-Failure at step 3 → service crashed; check logs before restarting.  
-Failure at step 4–5 → Docker daemon issue.  
-Failure at step 6 → image was removed; roll back (§3).
+- Failure at step 1 → connection or application layer; inspect the probe category.
+- Failure at step 2 → VM is down or SSH key revoked.
+- Failure at step 3 → service crashed; check logs before restarting.
+- Failure at step 4–5 → Docker daemon issue.
+- Failure at step 6 → image was removed; roll back (§3).
 
 ---
 
 ## 2. Safe service restart
 
-Restart only after confirming no active learner sessions (check `active_sessions` from the last successful `/health` response).
+Restart during a maintenance window after announcing a possible learner interruption. The health endpoint intentionally exposes no session count; the backend's graceful shutdown stops session containers.
 
 ```bash
 # On the Azure VM:
@@ -49,39 +56,44 @@ sudo journalctl -u cyberminds-terminal -n 100 --no-pager
 
 ---
 
-## 3. Rollback to the previous image tag
+## 3. Rollback to the previous repository commit
 
-The deployment uses a tagged Docker image. To roll back:
+The VM deploys the checked-out repository and builds the local `terminal-base:latest` image; it does not pull a versioned backend image from GHCR. On the dedicated deployment checkout:
 
-1. Find the previous known-good tag in the deployment history or CI artifacts.
-2. Pull and retag:
+1. Find the previous known-good commit:
 
    ```bash
-   docker pull ghcr.io/cyber-minds/terminal-backend:<PREV_TAG>
-   docker tag ghcr.io/cyber-minds/terminal-backend:<PREV_TAG> \
-       ghcr.io/cyber-minds/terminal-backend:current
+   cd /opt/cyberminds
+   git log --oneline --decorate -n 10
    ```
 
-3. Restart the service (§2).
-4. Confirm `/health` returns 200 before marking recovered.
+2. Check out the known-good commit and restart the stack:
 
-Do **not** force-push or delete the broken tag — leave it for post-incident analysis.
+   ```bash
+   git fetch origin main
+   git switch --detach <KNOWN_GOOD_COMMIT>
+   sudo systemctl restart cyberminds-terminal
+   ```
+
+3. Confirm `/health` returns 200 before marking recovered.
+
+Do **not** force-push or rewrite `main`; record the rollback commit for post-incident analysis.
 
 ---
 
 ## 4. Redeploy from main
 
-Use only when a rollback is not viable (e.g., the previous image is also broken).
+Use only when a rollback is not viable. There is no GitHub Actions deploy workflow; redeploy from the dedicated VM checkout:
 
 ```bash
-# Trigger the deploy workflow from the Actions UI:
-# Actions → Deploy Terminal Backend → Run workflow → branch: main
-
-# Or via CLI:
-gh workflow run deploy-terminal.yml --ref main
+cd /opt/cyberminds
+git fetch origin main
+git switch main
+git reset --hard origin/main
+sudo systemctl restart cyberminds-terminal
 ```
 
-Monitor the deploy run until it completes before declaring recovery.
+Monitor the restart command and the next probe before declaring recovery.
 
 ---
 
@@ -106,13 +118,13 @@ Escalate to the next person on-call when **any** of the following is true:
 - SSH access to the Azure VM is unavailable.
 - Probe shows `"category":"connection_error"` and the Azure portal reports the VM as stopped or deallocated.
 
-Escalation contact: open an incident in the Cyber-Minds internal tracker and tag the infrastructure owner.
+Escalation contact: notify the backend owner at `hi@egeuysal.com` and record the incident for follow-up.
 
 ---
 
 ## 7. What not to do
 
 - Do not share probe artifact URLs externally — they are CI-internal only.
-- Do not restart the service with active sessions without checking `active_sessions` first.
-- Do not roll back by deleting or overwriting image tags — use retag (§3).
+- Do not restart the service during an unannounced learner session.
+- Do not roll back by deleting or overwriting image tags — use a known-good commit (§3).
 - Do not modify `TERMINAL_HEALTH_URL` in repo vars during an active incident without announcing it — it will break probe baselining.

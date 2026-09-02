@@ -150,6 +150,7 @@ func loggingMiddleware(next http.Handler) http.Handler {
 func healthCheck(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
+	w.Header().Set("Content-Type", "application/json")
 
 	health := map[string]interface{}{
 		"status":    "ok",
@@ -172,11 +173,6 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	mu.RLock()
-	health["active_sessions"] = len(sessions)
-	mu.RUnlock()
-
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(health)
 }
