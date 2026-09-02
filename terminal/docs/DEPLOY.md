@@ -60,7 +60,7 @@ curl -sS -i https://terminal.egeuysal.com/health
 Expected:
 
 - HTTP `200 OK`
-- JSON body includes `"status":"ok"` and `"docker":"ok"`
+- JSON body includes `"status":"ok"` and no Docker or session-count fields
 
 ## 5. API Smoke Tests
 

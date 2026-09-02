@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 	"time"
 
@@ -135,6 +136,13 @@ func TestHealthCheckDockerUnavailable(t *testing.T) {
 
 	if rr.Code != http.StatusServiceUnavailable {
 		t.Fatalf("expected 503, got %d", rr.Code)
+	}
+	if rr.Header().Get("Content-Type") != "application/json" {
+		t.Fatalf("expected JSON content type, got %q", rr.Header().Get("Content-Type"))
+	}
+	body := rr.Body.String()
+	if strings.Contains(body, "docker") || strings.Contains(body, "active_sessions") {
+		t.Fatalf("health response must not expose infrastructure or session-count fields; got: %s", body)
 	}
 }
 

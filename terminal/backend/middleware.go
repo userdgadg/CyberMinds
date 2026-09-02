@@ -150,6 +150,7 @@ func loggingMiddleware(next http.Handler) http.Handler {
 func healthCheck(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
+	w.Header().Set("Content-Type", "application/json")
 
 	health := map[string]interface{}{
 		"status":    "ok",
@@ -160,7 +161,6 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		w.WriteHeader(http.StatusServiceUnavailable)
 		health["status"] = "error"
-		health["docker"] = "unavailable"
 		json.NewEncoder(w).Encode(health)
 		return
 	}
@@ -169,18 +169,10 @@ func healthCheck(w http.ResponseWriter, r *http.Request) {
 	if _, err := cli.Ping(ctx); err != nil {
 		w.WriteHeader(http.StatusServiceUnavailable)
 		health["status"] = "error"
-		health["docker"] = "unreachable"
 		json.NewEncoder(w).Encode(health)
 		return
 	}
 
-	mu.RLock()
-	health["active_sessions"] = len(sessions)
-	mu.RUnlock()
-
-	health["docker"] = "ok"
-
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(health)
 }
