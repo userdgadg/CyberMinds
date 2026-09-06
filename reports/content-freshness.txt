@@ -1,0 +1,24 @@
+Content freshness check (full)
+
+Undocumented content (no manifest entry): 20
+  course-1: live course card has no manifest entry
+  course-2: live course card has no manifest entry
+  course-3: live course card has no manifest entry
+  course-4: live course card has no manifest entry
+  course-5: live course card has no manifest entry
+  course-6: live course card has no manifest entry
+  course-7: live course card has no manifest entry
+  course-8: live course card has no manifest entry
+  course-9: live course card has no manifest entry
+  course-10: live course card has no manifest entry
+  course-11: live course card has no manifest entry
+  course-12: unpublished/teaser course card has no manifest entry documenting the exception
+  ctf-linux-basics: live ctf card has no manifest entry
+  ctf-web-recon: live ctf card has no manifest entry
+  ctf-log-hunt: live ctf card has no manifest entry
+  ctf-priv-esc: live ctf card has no manifest entry
+  ctf-incident-timeline: live ctf card has no manifest entry
+  ctf-suspicious-beaconing: live ctf card has no manifest entry
+  ctf-phishing-header: live ctf card has no manifest entry
+  ctf-iam-least-privilege: live ctf card has no manifest entry
+

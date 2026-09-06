@@ -8,16 +8,16 @@
 # safety net for cross-file drift the PR check structurally cannot see.
 
 name: Scheduled Link and Asset Audit
-
+ 
 on:
   schedule:
     # Every Monday 06:00 UTC.
     - cron: '0 6 * * 1'
   workflow_dispatch:
-
+ 
 permissions:
   contents: read
-
+ 
 jobs:
   full-link-audit:
     name: Full-corpus link and asset audit
@@ -25,19 +25,25 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v4
-
+ 
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
-
+ 
       - name: Run full-corpus link and asset audit
         run: node scripts/link-audit.js
-
-      - name: Upload link audit report
+ 
+      - name: Run full-corpus content freshness check
+        if: always()
+        run: node scripts/content-freshness.js
+ 
+      - name: Upload audit reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: link-audit-report
-          path: reports/link-audit.*
+          path: |
+            reports/link-audit.*
+            reports/content-freshness.*
           retention-days: 30
