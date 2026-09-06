@@ -31,7 +31,6 @@ const changedFrom = option('--changed-from');
 const mode = changedFrom ? 'changed' : 'full';
 const DEFAULT_REVIEW_CADENCE_DAYS = 180;
 
-
 const ALLOWED_DIFFICULTIES = ['Beginner', 'Intermediate', 'Advanced'];
 const REQUIRED_PUBLISHED_FIELDS = ['owner', 'difficulty', 'objective', 'lastReviewedAt'];
 
@@ -70,6 +69,7 @@ const PLACEHOLDER_PATTERNS = [
   { re: /\bfixme\b/i, label: '"FIXME" marker' },
   { re: /coming soon/i, label: '"coming soon" placeholder copy' },
   { re: /\bplaceholder\b/i, label: 'the word "placeholder"' },
+  { re: /\bfill in (?:the|a) (?:real )?(?:objective|description)\b/i, label: 'instructional placeholder copy' },
   { re: /content (goes|coming) here/i, label: 'generic "content goes/coming here" placeholder' },
   { re: /under construction/i, label: '"under construction" placeholder copy' },
 ];
@@ -161,8 +161,15 @@ function isBlank(value) {
   return value === undefined || value === null || String(value).trim() === '';
 }
 
+function parseReviewDate(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const reviewed = new Date(`${value}T00:00:00Z`);
+  if (Number.isNaN(reviewed.getTime())) return null;
+  return reviewed.toISOString().startsWith(`${value}T`) ? reviewed : null;
+}
+
 function daysBetween(a, b) {
-  return Math.round((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
+  return Math.floor((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24));
 }
 
 function validateEntry(entry, reviewCadenceDays, now) {
@@ -203,12 +210,12 @@ function validateEntry(entry, reviewCadenceDays, now) {
   }
 
   if (!isBlank(entry.lastReviewedAt)) {
-    const reviewed = new Date(entry.lastReviewedAt);
-    if (Number.isNaN(reviewed.getTime())) {
+    const reviewed = parseReviewDate(entry.lastReviewedAt);
+    if (!reviewed) {
       findings.push({
         id,
         class: 'invalid-date',
-        detail: `lastReviewedAt "${entry.lastReviewedAt}" is not a valid date`,
+        detail: `lastReviewedAt "${entry.lastReviewedAt}" must be a valid YYYY-MM-DD date`,
       });
     } else {
       const age = daysBetween(reviewed, now);
@@ -279,6 +286,16 @@ function courseDirectory(entry) {
   return path.resolve(repoRoot, 'HTML', 'Courses and Activities', `Course ${num}`);
 }
 
+function scanCourseFilePlaceholders(entry, file) {
+  const text = htmlToText(fs.readFileSync(file, 'utf8'));
+  return scanForPlaceholders(text).map((hit) => ({
+    id: entry.id,
+    class: 'placeholder-detected',
+    file: relative(file),
+    detail: `${hit.label}: "${hit.snippet}"`,
+  }));
+}
+
 function scanCoursePlaceholders(entry) {
   const dir = courseDirectory(entry);
   if (!fs.existsSync(dir) || !fs.statSync(dir).isDirectory()) {
@@ -287,16 +304,7 @@ function scanCoursePlaceholders(entry) {
   const findings = [];
   for (const name of fs.readdirSync(dir)) {
     if (!name.endsWith('.html')) continue;
-    const file = path.join(dir, name);
-    const text = htmlToText(fs.readFileSync(file, 'utf8'));
-    for (const hit of scanForPlaceholders(text)) {
-      findings.push({
-        id: entry.id,
-        class: 'placeholder-detected',
-        file: relative(file),
-        detail: `${hit.label}: "${hit.snippet}"`,
-      });
-    }
+    findings.push(...scanCourseFilePlaceholders(entry, path.join(dir, name)));
   }
   return findings;
 }
@@ -316,7 +324,7 @@ function scanCtfPlaceholders(entry) {
 function changedFiles(base, files) {
   const output = execFileSync(
     'git',
-    ['diff', '--name-only', '--diff-filter=ACMR', base, '--', ...files],
+    ['diff', '--name-only', '--diff-filter=ACMRD', base, '--', ...files],
     { cwd: repoRoot, encoding: 'utf8' }
   );
   return new Set(output.trim().split('\n').filter(Boolean));
@@ -332,6 +340,7 @@ function writeReports(report) {
   lines.push(`Content freshness check (${report.mode})`);
   lines.push('');
   const groups = [
+    ['missing-input', 'Required input missing'],
     ['undocumented-content', 'Undocumented content (no manifest entry)'],
     ['invalid-exception', 'Invalid exception (missing owner/reason)'],
     ['invalid-status', 'Invalid manifest status'],
@@ -375,25 +384,72 @@ function main() {
   const now = new Date();
 
   if (mode === 'changed') {
-    const relevant = ['scripts/content-manifest.json', 'HTML/course_Contents.html', 'HTML/CTF.html'];
+    const relevant = [
+      'scripts/content-manifest.json',
+      'HTML/course_Contents.html',
+      'HTML/CTF.html',
+      'HTML/Courses and Activities',
+    ];
     const changed = changedFiles(changedFrom, relevant);
+    const manifestChanged = changed.has('scripts/content-manifest.json');
+    const courseCatalogChanged = changed.has('HTML/course_Contents.html');
+    const ctfCatalogChanged = changed.has('HTML/CTF.html');
+    const lessonContentChanged = [...changed].some((file) =>
+      file.startsWith('HTML/Courses and Activities/') && file.endsWith('.html')
+    );
     const findings = [];
+    const orphans = [];
 
-    if (changed.has('HTML/course_Contents.html')) {
+    const manifestRequired = manifestChanged || courseCatalogChanged || ctfCatalogChanged || lessonContentChanged;
+    const requiredInputs = [
+      ['manifest', manifestPath, manifestRequired],
+      ['course catalog', courseContentsPath, manifestChanged || courseCatalogChanged],
+      ['CTF catalog', ctfCatalogPath, manifestChanged || ctfCatalogChanged],
+    ];
+    for (const [label, file, required] of requiredInputs) {
+      if (required && !fs.existsSync(file)) {
+        findings.push({
+          id: label,
+          class: 'missing-input',
+          file: relative(file),
+          detail: `${label} file is missing`,
+        });
+      }
+    }
+
+    if ((manifestChanged || courseCatalogChanged) && fs.existsSync(manifestPath) && fs.existsSync(courseContentsPath)) {
       const cards = extractCourseCards(fs.readFileSync(courseContentsPath, 'utf8'));
-      findings.push(...crossCheck(cards, manifest.entries, 'course').findings);
+      const check = crossCheck(cards, manifest.entries, 'course');
+      findings.push(...check.findings);
+      orphans.push(...check.orphans);
     }
-    if (changed.has('HTML/CTF.html')) {
+    if ((manifestChanged || ctfCatalogChanged) && fs.existsSync(manifestPath) && fs.existsSync(ctfCatalogPath)) {
       const cards = extractCtfCards(fs.readFileSync(ctfCatalogPath, 'utf8'));
-      findings.push(...crossCheck(cards, manifest.entries, 'ctf').findings);
+      const check = crossCheck(cards, manifest.entries, 'ctf');
+      findings.push(...check.findings);
+      orphans.push(...check.orphans);
     }
-    if (changed.has('scripts/content-manifest.json')) {
+    if (manifestChanged && fs.existsSync(manifestPath)) {
       for (const entry of manifest.entries) {
         findings.push(...validateEntry(entry, manifest.reviewCadenceDays, now));
       }
     }
 
-    const report = { generatedAt: now.toISOString(), mode, findings, orphans: [] };
+    if (lessonContentChanged && fs.existsSync(manifestPath)) {
+      for (const entry of manifest.entries) {
+        if (entry.type !== 'course' || entry.status !== 'published') continue;
+        const directory = `${relative(courseDirectory(entry)).replace(/\/+$/, '')}/`;
+        for (const file of changed) {
+          if (!file.startsWith(directory) || !file.endsWith('.html')) continue;
+          const absoluteFile = path.resolve(repoRoot, file);
+          if (fs.existsSync(absoluteFile)) {
+            findings.push(...scanCourseFilePlaceholders(entry, absoluteFile));
+          }
+        }
+      }
+    }
+
+    const report = { generatedAt: now.toISOString(), mode, findings, orphans };
     writeReports(report);
     if (findings.length) process.exitCode = 1;
     return;

@@ -167,7 +167,7 @@
       "status": "published",
       "owner": "Aditya",
       "difficulty": "Intermediate",
-      "objective": "fill in the real objective for this challenge.",
+      "objective": "Identify at least 3 spoofing indicators from phishing.eml, including the Return-Path mismatch, SPF or DKIM failures, or suspicious Received chain, and write findings to phishing-findings.txt.",
       "lastReviewedAt": "2026-09-06"
     },
     {
@@ -176,7 +176,7 @@
       "status": "published",
       "owner": "Aditya",
       "difficulty": "Intermediate",
-      "objective": "fill in the real objective for this challenge.",
+      "objective": "Edit policy.json to allow only s3:GetObject, s3:ListBucket, logs:CreateLogStream, and logs:PutLogEvents on the exact ARNs in requirements.txt, with no wildcards or unrelated actions.",
       "lastReviewedAt": "2026-09-06"
     }
   ]

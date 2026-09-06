@@ -32,15 +32,17 @@ checks relevant to what actually changed in the diff:
 
 - If `HTML/course_Contents.html` changed → re-run coverage for courses.
 - If `HTML/CTF.html` changed → re-run coverage for CTF challenges.
-- If `scripts/content-manifest.json` changed → re-validate every entry's
-  required fields, difficulty, and date format.
-- If none of those three files changed, the check passes immediately.
+- If `scripts/content-manifest.json` changed → re-run both catalog coverage
+  checks and re-validate every entry's required fields, difficulty, and date.
+- If a published course HTML file changed → scan that file for placeholder
+  copy.
+- If a required manifest or catalog file was deleted → fail explicitly.
+- If none of those inputs changed, the check passes immediately.
 
-**Staleness and placeholder scanning only run in full-corpus mode.** A PR
-that doesn't touch the catalog or the manifest will never fail because some
-unrelated course elsewhere is overdue for review — that's the scheduled
-job's responsibility, not something every unrelated PR should be blocked
-by.
+Full mode scans every published course file and CTF objective. Changed mode
+only scans touched course files, so a PR that doesn't touch content will never
+fail because some unrelated course elsewhere contains placeholder copy. The
+scheduled job remains responsible for the complete corpus.
 
 ## The manifest (`scripts/content-manifest.json`)
 
@@ -117,11 +119,12 @@ unpublished card with **no** manifest entry at all fails as
 | `invalid-status` | `status` is neither `published` nor `intentionally-unpublished` | Yes |
 | `missing-field` | A published entry is missing `owner`/`difficulty`/`objective`/`lastReviewedAt` | Yes |
 | `invalid-difficulty` | `difficulty` isn't Beginner/Intermediate/Advanced | Yes |
-| `invalid-date` | `lastReviewedAt` doesn't parse as a date | Yes |
-| `stale-review` | `lastReviewedAt` is older than `reviewCadenceDays` | Yes (full mode only) |
-| `placeholder-detected` | Placeholder copy found in page content or CTF objective | Yes (full mode only) |
+| `invalid-date` | `lastReviewedAt` isn't a real `YYYY-MM-DD` date | Yes |
+| `stale-review` | `lastReviewedAt` is older than `reviewCadenceDays` | Yes |
+| `placeholder-detected` | Placeholder copy found in page content or CTF objective | Yes |
 | `status-mismatch` | e.g. manifest says `published` but the catalog card has no live target | Yes |
 | `missing-content-directory` | A published course's expected directory doesn't exist on disk | Yes |
+| `missing-input` | A required manifest or catalog file was deleted | Yes |
 | `orphan-manifest-entry` | Manifest lists an id with no matching catalog card | No — cleanup reminder only |
 
 ## Review cadence

@@ -287,6 +287,29 @@ test('detects placeholder text inside a CTF objective in the manifest itself', (
   cleanup(root);
 });
 
+test('detects instructional placeholder text in a CTF objective', () => {
+  const root = makeRepo({
+    'HTML/course_Contents.html': '<html><body></body></html>',
+    'HTML/CTF.html': CTF_ONE_CARD,
+    'scripts/content-manifest.json': JSON.stringify({
+      reviewCadenceDays: 180,
+      entries: [{
+        id: 'ctf-linux-basics',
+        type: 'ctf',
+        status: 'published',
+        owner: 'A',
+        difficulty: 'Beginner',
+        objective: 'fill in the real objective for this challenge.',
+        lastReviewedAt: '2026-08-01',
+      }],
+    }),
+  });
+  const { status, report } = run(root);
+  assert.equal(status, 1);
+  assert.ok(report.findings.some((f) => f.class === 'placeholder-detected' && f.id === 'ctf-linux-basics'));
+  cleanup(root);
+});
+
 test('never executes page content -- a script tag with malicious code is inert', () => {
   const root = makeRepo({
     'HTML/course_Contents.html': COURSE_CONTENTS_ONE_COURSE,
@@ -361,6 +384,64 @@ test('--changed-from catches a newly added course card with no manifest entry', 
   cleanup(root);
 });
 
+test('--changed-from catches a catalog entry removed from the manifest', () => {
+  const root = makeRepo({
+    'HTML/course_Contents.html': COURSE_CONTENTS_ONE_COURSE,
+    'HTML/CTF.html': CTF_ONE_CARD,
+    'scripts/content-manifest.json': validManifest(),
+  });
+  spawnSync('git', ['init', '-q'], { cwd: root });
+  spawnSync('git', ['add', '-A'], { cwd: root });
+  spawnSync('git', ['-c', 'user.email=t@t.com', '-c', 'user.name=t', 'commit', '-q', '-m', 'init'], { cwd: root });
+
+  const manifest = JSON.parse(validManifest());
+  manifest.entries = manifest.entries.filter((entry) => entry.id !== 'course-3');
+  fs.writeFileSync(path.join(root, 'scripts/content-manifest.json'), JSON.stringify(manifest));
+
+  const { status, report } = run(root, ['--changed-from', 'HEAD']);
+  assert.equal(status, 1);
+  assert.ok(report.findings.some((f) => f.id === 'course-3' && f.class === 'undocumented-content'));
+  cleanup(root);
+});
+
+test('--changed-from scans changed course HTML for placeholder copy', () => {
+  const root = makeRepo({
+    'HTML/course_Contents.html': COURSE_CONTENTS_ONE_COURSE,
+    'HTML/CTF.html': CTF_ONE_CARD,
+    'HTML/Courses and Activities/Course 3/Introductioncourse3.html': '<p>Real course content.</p>',
+    'scripts/content-manifest.json': validManifest(),
+  });
+  spawnSync('git', ['init', '-q'], { cwd: root });
+  spawnSync('git', ['add', '-A'], { cwd: root });
+  spawnSync('git', ['-c', 'user.email=t@t.com', '-c', 'user.name=t', 'commit', '-q', '-m', 'init'], { cwd: root });
+  fs.writeFileSync(
+    path.join(root, 'HTML/Courses and Activities/Course 3/Introductioncourse3.html'),
+    '<p>TODO: replace this lesson content.</p>'
+  );
+
+  const { status, report } = run(root, ['--changed-from', 'HEAD']);
+  assert.equal(status, 1);
+  assert.ok(report.findings.some((f) => f.class === 'placeholder-detected' && f.id === 'course-3'));
+  cleanup(root);
+});
+
+test('--changed-from fails when the manifest is deleted', () => {
+  const root = makeRepo({
+    'HTML/course_Contents.html': COURSE_CONTENTS_ONE_COURSE,
+    'HTML/CTF.html': CTF_ONE_CARD,
+    'scripts/content-manifest.json': validManifest(),
+  });
+  spawnSync('git', ['init', '-q'], { cwd: root });
+  spawnSync('git', ['add', '-A'], { cwd: root });
+  spawnSync('git', ['-c', 'user.email=t@t.com', '-c', 'user.name=t', 'commit', '-q', '-m', 'init'], { cwd: root });
+  fs.rmSync(path.join(root, 'scripts/content-manifest.json'));
+
+  const { status, report } = run(root, ['--changed-from', 'HEAD']);
+  assert.equal(status, 1);
+  assert.ok(report.findings.some((f) => f.class === 'missing-input' && f.file === 'scripts/content-manifest.json'));
+  cleanup(root);
+});
+
 test('--changed-from does not fail on pre-existing staleness when the catalog/manifest are untouched', () => {
   const root = makeRepo({
     'HTML/course_Contents.html': COURSE_CONTENTS_ONE_COURSE,
@@ -386,5 +467,20 @@ test('--changed-from does not fail on pre-existing staleness when the catalog/ma
 
   const { status } = run(root, ['--changed-from', 'HEAD']);
   assert.equal(status, 0);
+  cleanup(root);
+});
+
+test('rejects calendar dates that JavaScript would normalize', () => {
+  const root = makeRepo({
+    'HTML/course_Contents.html': COURSE_CONTENTS_ONE_COURSE,
+    'HTML/CTF.html': '<html><body></body></html>',
+    'HTML/Courses and Activities/Course 3/Introductioncourse3.html': '<p>x</p>',
+    'scripts/content-manifest.json': validManifest({
+      entries: [{ id: 'course-3', type: 'course', status: 'published', owner: 'A', difficulty: 'Beginner', objective: 'x', lastReviewedAt: '2026-02-31' }],
+    }),
+  });
+  const { status, report } = run(root);
+  assert.equal(status, 1);
+  assert.ok(report.findings.some((f) => f.class === 'invalid-date'));
   cleanup(root);
 });
