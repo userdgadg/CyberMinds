@@ -47,7 +47,22 @@ jobs:
           QA_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
         run: npm run qa:static -- --changed-from "$QA_BASE"
 
-      - name: Check changed links and assets
+      - name: Link and asset audit (changed files)
         env:
           QA_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
-        run: npm run qa:links -- --changed-from "$QA_BASE"
+        run: node scripts/link-audit.js --changed-from "$QA_BASE"
+
+      - name: Content freshness check (changed files)
+        env:
+          QA_BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: node scripts/content-freshness.js --changed-from "$QA_BASE"
+
+      - name: Upload QA reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-reports-pr
+          path: |
+            reports/link-audit.*
+            reports/content-freshness.*
+          retention-days: 7

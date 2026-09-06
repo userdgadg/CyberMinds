@@ -34,10 +34,16 @@ jobs:
       - name: Run full-corpus link and asset audit
         run: node scripts/link-audit.js
 
-      - name: Upload link audit report
+      - name: Run full-corpus content freshness check
+        if: always()
+        run: node scripts/content-freshness.js
+
+      - name: Upload audit reports
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: link-audit-report
-          path: reports/link-audit.*
+          path: |
+            reports/link-audit.*
+            reports/content-freshness.*
           retention-days: 30

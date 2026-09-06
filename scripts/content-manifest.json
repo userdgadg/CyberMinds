@@ -1,0 +1,183 @@
+{
+  "reviewCadenceDays": 180,
+  "entries": [
+    {
+      "id": "course-1",
+      "type": "course",
+      "status": "published",
+      "owner": "Aditya",
+      "difficulty": "Beginner",
+      "objective": "Understand basic cybersecurity concepts, why security matters, and common security career paths.",
+      "lastReviewedAt": "2026-09-06"
+    },
+    {
+      "id": "course-2",
+      "type": "course",
+      "status": "published",
+      "owner": "Aditya",
+      "difficulty": "Beginner",
+      "objective": "Distinguish security practices for individuals vs. companies and what each should do differently.",
+      "lastReviewedAt": "2026-09-06"
+    },
+    {
+      "id": "course-3",
+      "type": "course",
+      "status": "published",
+      "owner": "Aditya",
+      "difficulty": "Beginner",
+      "objective": "Identify common attackers, attack types, and the consequences a successful or failed attack can have.",
+      "lastReviewedAt": "2026-09-06"
+    },
+    {
+      "id": "course-4",
+      "type": "course",
+      "status": "published",
+      "owner": "Aditya",
+      "difficulty": "Beginner",
+      "objective": "Explain the need for defensive measures online and describe practical steps to stay safe.",
+      "lastReviewedAt": "2026-09-06"
+    },
+    {
+      "id": "course-5",
+      "type": "course",
+      "status": "published",
+      "owner": "Aditya",
+      "difficulty": "Intermediate",
+      "objective": "Explain why cryptography matters and apply basic cryptographic algorithms.",
+      "lastReviewedAt": "2026-09-06"
+    },
+    {
+      "id": "course-6",
+      "type": "course",
+      "status": "published",
+      "owner": "Aditya",
+      "difficulty": "Beginner",
+      "objective": "Explain the importance of Linux in cybersecurity and run basic Linux commands.",
+      "lastReviewedAt": "2026-09-06"
+    },
+    {
+      "id": "course-7",
+      "type": "course",
+      "status": "published",
+      "owner": "Aditya",
+      "difficulty": "Intermediate",
+      "objective": "Describe additional categories of cyberattacks and the specifics of how they work.",
+      "lastReviewedAt": "2026-09-06"
+    },
+    {
+      "id": "course-8",
+      "type": "course",
+      "status": "published",
+      "owner": "Aditya",
+      "difficulty": "Beginner",
+      "objective": "Describe the learner's own role in keeping themselves and others safe online.",
+      "lastReviewedAt": "2026-09-06"
+    },
+    {
+      "id": "course-9",
+      "type": "course",
+      "status": "published",
+      "owner": "Aditya",
+      "difficulty": "Intermediate",
+      "objective": "Explain penetration testing types and concepts, and identify authorized environments to practice hacking.",
+      "lastReviewedAt": "2026-09-06"
+    },
+    {
+      "id": "course-10",
+      "type": "course",
+      "status": "published",
+      "owner": "Aditya",
+      "difficulty": "Intermediate",
+      "objective": "Apply core networking concepts to deepen understanding of security fundamentals.",
+      "lastReviewedAt": "2026-09-06"
+    },
+    {
+      "id": "course-11",
+      "type": "course",
+      "status": "published",
+      "owner": "Aditya",
+      "difficulty": "Intermediate",
+      "objective": "Explain cloud security fundamentals including common threats, shared responsibility, and best practices.",
+      "lastReviewedAt": "2026-09-06"
+    },
+    {
+      "id": "course-12",
+      "type": "course",
+      "status": "intentionally-unpublished",
+      "owner": "Aditya",
+      "exceptionReason": "Course still in development. Catalog card intentionally has no href; popup tells learners to check back later."
+    },
+    {
+      "id": "ctf-linux-basics",
+      "type": "ctf",
+      "status": "published",
+      "owner": "Aditya",
+      "difficulty": "Beginner",
+      "objective": "Run pwd, whoami, and ls -la, then summarise directory ownership/permissions in report.txt.",
+      "lastReviewedAt": "2026-09-06"
+    },
+    {
+      "id": "ctf-web-recon",
+      "type": "ctf",
+      "status": "published",
+      "owner": "Aditya",
+      "difficulty": "Beginner",
+      "objective": "Identify the local nginx service and capture response headers including X-Powered-By and X-Application in recon-notes.txt.",
+      "lastReviewedAt": "2026-09-06"
+    },
+    {
+      "id": "ctf-log-hunt",
+      "type": "ctf",
+      "status": "published",
+      "owner": "Aditya",
+      "difficulty": "Intermediate",
+      "objective": "Rank offending IPs from a failed-auth log and record findings plus an incident summary in findings.txt.",
+      "lastReviewedAt": "2026-09-06"
+    },
+    {
+      "id": "ctf-priv-esc",
+      "type": "ctf",
+      "status": "published",
+      "owner": "Aditya",
+      "difficulty": "Intermediate",
+      "objective": "Trace privilege escalation from an SSH session to root and record the user, timestamp, and method in priv-esc-report.txt.",
+      "lastReviewedAt": "2026-09-06"
+    },
+    {
+      "id": "ctf-incident-timeline",
+      "type": "ctf",
+      "status": "published",
+      "owner": "Aditya",
+      "difficulty": "Intermediate",
+      "objective": "Correlate SSH, HTTP, and syslog events into a chronological, deduplicated timeline of at least 8 entries.",
+      "lastReviewedAt": "2026-09-06"
+    },
+    {
+      "id": "ctf-suspicious-beaconing",
+      "type": "ctf",
+      "status": "published",
+      "owner": "Aditya",
+      "difficulty": "Intermediate",
+      "objective": "Detect periodic callback patterns in an HTTP access log by analysing user-agent strings and request intervals.",
+      "lastReviewedAt": "2026-09-06"
+    },
+    {
+      "id": "ctf-phishing-header",
+      "type": "ctf",
+      "status": "published",
+      "owner": "Aditya",
+      "difficulty": "Intermediate",
+      "objective": "Identify at least 3 spoofing indicators from phishing.eml, including the Return-Path mismatch, SPF or DKIM failures, or suspicious Received chain, and write findings to phishing-findings.txt.",
+      "lastReviewedAt": "2026-09-06"
+    },
+    {
+      "id": "ctf-iam-least-privilege",
+      "type": "ctf",
+      "status": "published",
+      "owner": "Aditya",
+      "difficulty": "Intermediate",
+      "objective": "Edit policy.json to allow only s3:GetObject, s3:ListBucket, logs:CreateLogStream, and logs:PutLogEvents on the exact ARNs in requirements.txt, with no wildcards or unrelated actions.",
+      "lastReviewedAt": "2026-09-06"
+    }
+  ]
+}
