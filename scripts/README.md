@@ -29,7 +29,7 @@ are not copied into CI artifacts.
 | `broken-local` | Local reference does not resolve to a file in the repo | Yes, unless in the baseline |
 | `invalid-ignore-directive` | `data-qa-ignore-link` present with no reason text | Always yes — cannot be baselined |
 | `ignored` | `data-qa-ignore-link="reason"` present, excluded intentionally | No |
-| `runtime-generated` | Target contains `{{` or `${` (template syntax) | No |
+| `runtime-generated` | Target contains `&#123;&#123;` or `${` (template syntax) | No |
 | `external` | `http(s)://` URL — classified only, never fetched or checked | No |
 | `ok` | Local reference resolves | No |
 

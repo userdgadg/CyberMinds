@@ -1,5 +1,6 @@
 # Run this:
 
+{% raw %}
 set -e
 
 cd ~/CyberMinds
@@ -59,3 +60,4 @@ docker exec "$PUB_CADDY" caddy reload --config /etc/caddy/Caddyfile
 ## 7) Verify
 
 curl -I https://terminal.egeuysal.com/health
+{% endraw %}
